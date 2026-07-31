@@ -3,12 +3,14 @@ const form = $('contractForm');
 const servicesList = $('servicesList');
 const serviceTemplate = $('serviceTemplate');
 const STORAGE_KEY = 'brinky_contracts_v1';
-const APP_VERSION='6.0';
+const APP_VERSION='6.5';
 const QUOTES_KEY='brinky_quotes_v1';
 const EXPENSES_KEY='brinky_expenses_v1';
 const LOYALTY_KEY='brinky_loyalty_v1';
 const LOYALTY_SETTINGS_KEY='brinky_loyalty_settings_v1';
 const MESSAGES_KEY='brinky_messages_v1';
+const CLUB_APPEARANCE_KEY='brinky_club_appearance_v1';
+const CLUB_TEMPLATES_KEY='brinky_club_templates_v1';
 const COMPANY = {
   name:'BRINKY FIESTA',
   address:'Calle 13 x 18 y 20, Col. Centro, Umán, Yucatán',
@@ -981,6 +983,172 @@ window.completeContractAndStamp=id=>{
       : 'Servicio realizado. Se agregó 1 Estrella Brinky a la tarjeta del cliente.'
   );
 }
+
+const DEFAULT_CARD_APPEARANCE={
+  theme:'green',
+  backgroundMode:'gradient',
+  primary:'#0b9d46',
+  secondary:'#064f29',
+  text:'#ffffff',
+  star:'#ffd84d',
+  overlay:0.30,
+  backgroundImage:''
+};
+const CARD_THEME_PRESETS={
+  green:{theme:'green',backgroundMode:'gradient',primary:'#0b9d46',secondary:'#064f29',text:'#ffffff',star:'#ffd84d',overlay:0.30},
+  blue:{theme:'blue',backgroundMode:'gradient',primary:'#1597e5',secondary:'#174ea6',text:'#ffffff',star:'#ffd84d',overlay:0.28},
+  gold:{theme:'gold',backgroundMode:'gradient',primary:'#c99317',secondary:'#5f3d05',text:'#ffffff',star:'#fff0a6',overlay:0.30},
+  rainbow:{theme:'rainbow',backgroundMode:'gradient',primary:'#7a3ff2',secondary:'#e6367a',text:'#ffffff',star:'#ffe44d',overlay:0.25}
+};
+const DEFAULT_CLUB_TEMPLATES={
+  welcome:`🎉 *¡Bienvenido al Club Brinky Fiesta!* 🐸
+
+Hola *{NOMBRE}*. Tu registro se completó correctamente y recibiste *1 Estrella Brinky de Bienvenida*.
+
+🌟 {PROGRESO} ({ESTRELLAS} de {META})
+🆔 Tu código de referencia es: *{CODIGO}*
+
+🎁 Próxima recompensa: *{RECOMPENSA}*
+Te faltan *{FALTANTES} Estrellas Brinky*.
+
+🤝 Recomienda a un amigo usando tu código y, cuando complete su renta, ambos ganan 1 Estrella Brinky.
+
+Síguenos en Facebook:
+{FACEBOOK}
+
+¡Gracias por formar parte de Brinky Fiesta! 🎈`,
+  update:`⭐ *¡Tu Tarjeta Club Brinky fue actualizada!*
+
+Hola *{NOMBRE}*. Acabas de recibir una nueva Estrella Brinky.
+
+🌟 {PROGRESO} ({ESTRELLAS} de {META})
+
+🎁 Próxima recompensa: *{RECOMPENSA}*
+Te faltan *{FALTANTES} Estrellas Brinky*.
+
+Código de referencia: *{CODIGO}*
+Recomienda a un amigo usando tu código y ambos ganan 1 estrella cuando complete su renta.
+
+Facebook:
+{FACEBOOK}`,
+  reward:`🎉 *¡RECOMPENSA DESBLOQUEADA!* 🎁
+
+Hola *{NOMBRE}*. Ya acumulaste *{ESTRELLAS} Estrellas Brinky* y puedes disfrutar de:
+
+🏆 *{RECOMPENSA}*
+
+Escríbenos al realizar tu próxima reservación para aplicar tu beneficio.
+
+Código: *{CODIGO}*
+Facebook:
+{FACEBOOK}`,
+  referral:`🤝 *¡Ganaste una Estrella Brinky por recomendar!*
+
+Hola *{NOMBRE}*. Una persona utilizó tu código *{CODIGO}* y tu tarjeta fue actualizada.
+
+🌟 {PROGRESO} ({ESTRELLAS} de {META})
+
+🎁 Próxima recompensa: *{RECOMPENSA}*
+Te faltan *{FALTANTES} Estrellas Brinky*.
+
+¡Sigue recomendando y acumulando recompensas! 🐸🎉
+
+Facebook:
+{FACEBOOK}`,
+  facebook:'Brincolines Brinky Fiesta'
+};
+function getCardAppearance(){
+  try{return {...DEFAULT_CARD_APPEARANCE,...JSON.parse(localStorage.getItem(CLUB_APPEARANCE_KEY)||'{}')}}catch{return {...DEFAULT_CARD_APPEARANCE}}
+}
+function setCardAppearance(data){localStorage.setItem(CLUB_APPEARANCE_KEY,JSON.stringify(data))}
+function getClubTemplates(){
+  try{return {...DEFAULT_CLUB_TEMPLATES,...JSON.parse(localStorage.getItem(CLUB_TEMPLATES_KEY)||'{}')}}catch{return {...DEFAULT_CLUB_TEMPLATES}}
+}
+function setClubTemplates(data){localStorage.setItem(CLUB_TEMPLATES_KEY,JSON.stringify(data))}
+function messageVariables(c){
+  const s=getLoyaltySettings(),next=loyaltyNext(c),r=rewardStatus(c);
+  const filled='⭐'.repeat(Math.min(Number(c.stamps||0),s.r2));
+  const empty='☆'.repeat(Math.max(0,s.r2-Number(c.stamps||0)));
+  return {
+    NOMBRE:c.name||'Cliente',
+    CODIGO:c.code||'BRK-0000',
+    ESTRELLAS:String(Number(c.stamps||0)),
+    META:String(s.r2),
+    FALTANTES:String(Math.max(0,next.left||0)),
+    RECOMPENSA:r?.name||next.name||s.n1,
+    PROGRESO:filled+empty,
+    FACEBOOK:getClubTemplates().facebook||COMPANY.facebook
+  };
+}
+function applyTemplate(template,c){
+  const vars=messageVariables(c);
+  return String(template||'').replace(/\{([A-Z_]+)\}/g,(all,key)=>Object.prototype.hasOwnProperty.call(vars,key)?vars[key]:all);
+}
+function appearanceCss(a){
+  if(a.backgroundMode==='solid')return a.primary;
+  if(a.backgroundMode==='image'&&a.backgroundImage)return `linear-gradient(rgba(0,0,0,${a.overlay}),rgba(0,0,0,${a.overlay})),url("${a.backgroundImage}") center/cover`;
+  return `linear-gradient(145deg,${a.primary},${a.secondary})`;
+}
+function applyOnScreenCardAppearance(){
+  const a=getCardAppearance(),card=$('loyaltyCard');
+  if(!card)return;
+  card.style.background=appearanceCss(a);
+  card.style.color=a.text;
+  card.style.setProperty('--club-star-color',a.star);
+}
+function loadImageAsCanvas(url){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>resolve(img);
+    img.onerror=reject;
+    img.src=url;
+  });
+}
+async function resizeBackgroundFile(file){
+  const data=await new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(reader.result);
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
+  const img=await loadImageAsCanvas(data);
+  const canvas=document.createElement('canvas');
+  canvas.width=1080;canvas.height=1500;
+  const g=canvas.getContext('2d');
+  const scale=Math.max(canvas.width/img.width,canvas.height/img.height);
+  const w=img.width*scale,h=img.height*scale;
+  g.drawImage(img,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
+  return canvas.toDataURL('image/jpeg',0.76);
+}
+function fillCustomizationControls(){
+  const a=getCardAppearance(),t=getClubTemplates();
+  if($('cardBackgroundMode'))$('cardBackgroundMode').value=a.backgroundMode;
+  if($('cardPrimaryColor'))$('cardPrimaryColor').value=a.primary;
+  if($('cardSecondaryColor'))$('cardSecondaryColor').value=a.secondary;
+  if($('cardTextColor'))$('cardTextColor').value=a.text;
+  if($('cardStarColor'))$('cardStarColor').value=a.star;
+  if($('cardOverlayOpacity'))$('cardOverlayOpacity').value=a.overlay;
+  if($('clubFacebookLink'))$('clubFacebookLink').value=t.facebook||'';
+}
+function readAppearanceControls(){
+  const current=getCardAppearance();
+  return {
+    ...current,
+    backgroundMode:$('cardBackgroundMode')?.value||'gradient',
+    primary:$('cardPrimaryColor')?.value||'#0b9d46',
+    secondary:$('cardSecondaryColor')?.value||'#064f29',
+    text:$('cardTextColor')?.value||'#ffffff',
+    star:$('cardStarColor')?.value||'#ffd84d',
+    overlay:Number($('cardOverlayOpacity')?.value||0.3)
+  };
+}
+let selectedTemplateType='welcome';
+function loadTemplateEditor(){
+  const t=getClubTemplates();
+  if($('clubMessageTemplate'))$('clubMessageTemplate').value=t[selectedTemplateType]||DEFAULT_CLUB_TEMPLATES[selectedTemplateType];
+  document.querySelectorAll('[data-template-type]').forEach(b=>b.classList.toggle('active',b.dataset.templateType===selectedTemplateType));
+}
+
 function rewardStatus(c){const s=getLoyaltySettings(),st=Number(c.stamps||0);if(st>=s.r2)return {name:s.n2,target:s.r2};if(st>=s.r1)return {name:s.n1,target:s.r1};return null}
 
 function loyaltyTier(stamps){const n=Number(stamps||0);if(n>=16)return {name:'DIAMANTE',icon:'💎'};if(n>=8)return {name:'ORO',icon:'🥇'};if(n>=4)return {name:'PLATA',icon:'🥈'};return {name:'BRONCE',icon:'🥉'}}
@@ -992,18 +1160,117 @@ window.deleteLoyalty=id=>{if(confirm('¿Eliminar este cliente y su historial de 
 function stampDots(stamps,target){let out='';for(let i=1;i<=target;i++)out+=`<span class="stamp-dot ${i<=stamps?'filled':''}">${i<=stamps?'★':'☆'}</span>`;return out}
 function qrPayload(c){return `BRINKY FIESTA CLUB | ${c.code} | ${c.name} | ${c.phone}`}
 function qrUrl(c,size=500){return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(qrPayload(c))}`}
-window.openLoyalty=id=>{currentLoyaltyId=id;const c=getLoyalty().find(x=>x.id===id);if(!c)return;const s=getLoyaltySettings(),r=rewardStatus(c),tier=loyaltyTier(c.stamps),next=loyaltyNext(c),cta=next.left>0?`Te faltan solo <b>${next.left}</b> Estrella${next.left===1?'':'s'} Brinky para obtener <b>${escapeHtml(next.name)}</b>.`:`🎉 Ya desbloqueaste <b>${escapeHtml(next.name)}</b>.`;$('loyaltyCard').innerHTML=`<div class="vip-shine"></div><div class="vip-watermark">🐸</div><div class="loyalty-card-head"><img src="icons/icon-192.png" alt="Brinky"><div><h2>CLUB BRINKY</h2><p>MEMBRESÍA VIP · BRINKY FIESTA</p></div></div><div class="vip-tier">${tier.icon} NIVEL ${tier.name}</div><div class="loyalty-person"><h3>${escapeHtml(c.name)}</h3><p>🆔 ${escapeHtml(c.code)} · 📱 ${escapeHtml(c.phone)}</p><small>Miembro desde ${escapeHtml(memberSince(c))}</small></div><div class="stamp-grid">${stampDots(Number(c.stamps||0),s.r2)}</div><div class="loyalty-progress"><b>${Number(c.stamps||0)} de ${s.r2} Estrellas Brinky</b><span>${r?'🎁 Premio disponible: '+escapeHtml(r.name):'Próxima recompensa: '+escapeHtml(next.name)}</span></div><div class="qr-wrap"><img class="loyalty-qr" src="${qrUrl(c,300)}" alt="Código QR"><span>ESCANEA TU TARJETA</span></div><small>Consulta e identifica tu Tarjeta Club Brinky con este QR único.</small><div class="vip-cta">🎈 ${cta}</div><div class="referral-box">🤝 Comparte tu código <b>${escapeHtml(c.code)}</b><br><small>Cuando un amigo rente con tu código, ambos reciben 1 Estrella Brinky.</small></div>`;$('loyaltyHistory').innerHTML=(c.history||[]).length?(c.history||[]).map(h=>`<div class="history-row"><span>${new Date(h.date).toLocaleDateString('es-MX')}</span><b>${escapeHtml(h.text)}</b></div>`).join(''):'<div class="empty">Sin movimientos.</div>';$('loyaltyModal').classList.remove('hidden')}
+window.openLoyalty=id=>{currentLoyaltyId=id;const c=getLoyalty().find(x=>x.id===id);if(!c)return;const s=getLoyaltySettings(),r=rewardStatus(c),tier=loyaltyTier(c.stamps),next=loyaltyNext(c),cta=next.left>0?`Te faltan solo <b>${next.left}</b> Estrella${next.left===1?'':'s'} Brinky para obtener <b>${escapeHtml(next.name)}</b>.`:`🎉 Ya desbloqueaste <b>${escapeHtml(next.name)}</b>.`;$('loyaltyCard').innerHTML=`<div class="vip-shine"></div><div class="vip-watermark">🐸</div><div class="loyalty-card-head"><img src="icons/icon-192.png" alt="Brinky"><div><h2>CLUB BRINKY</h2><p>MEMBRESÍA VIP · BRINKY FIESTA</p></div></div><div class="vip-tier">${tier.icon} NIVEL ${tier.name}</div><div class="loyalty-person"><h3>${escapeHtml(c.name)}</h3><p>🆔 ${escapeHtml(c.code)} · 📱 ${escapeHtml(c.phone)}</p><small>Miembro desde ${escapeHtml(memberSince(c))}</small></div><div class="stamp-grid">${stampDots(Number(c.stamps||0),s.r2)}</div><div class="loyalty-progress"><b>${Number(c.stamps||0)} de ${s.r2} Estrellas Brinky</b><span>${r?'🎁 Premio disponible: '+escapeHtml(r.name):'Próxima recompensa: '+escapeHtml(next.name)}</span></div><div class="qr-wrap"><img class="loyalty-qr" src="${qrUrl(c,300)}" alt="Código QR"><span>ESCANEA TU TARJETA</span></div><small>Consulta e identifica tu Tarjeta Club Brinky con este QR único.</small><div class="vip-cta">🎈 ${cta}</div><div class="referral-box">🤝 Comparte tu código <b>${escapeHtml(c.code)}</b><br><small>Cuando un amigo rente con tu código, ambos reciben 1 Estrella Brinky.</small></div>`;applyOnScreenCardAppearance();$('loyaltyHistory').innerHTML=(c.history||[]).length?(c.history||[]).map(h=>`<div class="history-row"><span>${new Date(h.date).toLocaleDateString('es-MX')}</span><b>${escapeHtml(h.text)}</b></div>`).join(''):'<div class="empty">Sin movimientos.</div>';$('loyaltyModal').classList.remove('hidden')}
 function updateCurrentLoyalty(delta,text,type='adjustment'){const items=getLoyalty(),i=items.findIndex(x=>x.id===currentLoyaltyId);if(i<0)return;const before=Number(items[i].stamps||0);items[i].stamps=Math.max(0,before+delta);items[i].history=items[i].history||[];items[i].history.unshift({date:new Date().toISOString(),type,text});setLoyalty(items);if(delta>0){const s=getLoyaltySettings(),after=items[i].stamps,msgType=(before<s.r2&&after>=s.r2)||(before<s.r1&&after>=s.r1)?'reward':'update';queueLoyaltyMessage(items[i],msgType,`${type}-${Date.now()}`)}openLoyalty(currentLoyaltyId)}
-$('loyaltyForm')?.addEventListener('submit',e=>{e.preventDefault();const phone=$('loyaltyPhone').value.trim(),key=normalizedPhone(phone),items=getLoyalty();if(items.some(c=>normalizedPhone(c.phone)===key&&key)){alert('Ya existe un cliente con ese teléfono.');return}const c={id:'LC-'+Date.now(),code:nextLoyaltyCode(),name:$('loyaltyName').value.trim(),phone,birthday:$('loyaltyBirthday').value,notes:$('loyaltyNotes').value.trim(),stamps:1,totalRents:0,totalSpent:0,referrals:0,history:[{date:new Date().toISOString(),type:'welcome',text:'Estrella Brinky de bienvenida'}],createdAt:new Date().toISOString()};const ref=$('loyaltyReferrer').value.trim().toUpperCase();if(ref){const ri=items.findIndex(x=>String(x.code).toUpperCase()===ref);if(ri>=0){items[ri].stamps=Number(items[ri].stamps||0)+1;items[ri].referrals=Number(items[ri].referrals||0)+1;items[ri].history.unshift({date:new Date().toISOString(),type:'referral',text:`Estrella Brinky por recomendar a ${c.name}`});c.stamps=2;c.history.unshift({date:new Date().toISOString(),type:'referral',text:`Estrella Brinky por referencia ${ref}`});c.referredBy=items[ri].id;queueLoyaltyMessage(items[ri],'referral',`ref-${c.id}`)}}items.unshift(c);setLoyalty(items);queueLoyaltyMessage(c,'welcome',`welcome-${c.id}`);e.target.reset();renderMessages();alert(`Cliente registrado con 1 Estrella de Bienvenida. Código: ${c.code}`)})
+$('loyaltyForm')?.addEventListener('submit',e=>{e.preventDefault();const phone=$('loyaltyPhone').value.trim(),key=normalizedPhone(phone),items=getLoyalty();if(items.some(c=>normalizedPhone(c.phone)===key&&key)){alert('Ya existe un cliente con ese teléfono.');return}const c={id:'LC-'+Date.now(),code:nextLoyaltyCode(),name:$('loyaltyName').value.trim(),phone,birthday:$('loyaltyBirthday').value,notes:$('loyaltyNotes').value.trim(),stamps:1,totalRents:0,totalSpent:0,referrals:0,history:[{date:new Date().toISOString(),type:'welcome',text:'Estrella Brinky de bienvenida'}],createdAt:new Date().toISOString()};const ref=$('loyaltyReferrer').value.trim().toUpperCase();if(ref){const ri=items.findIndex(x=>String(x.code).toUpperCase()===ref);if(ri>=0){items[ri].stamps=Number(items[ri].stamps||0)+1;items[ri].referrals=Number(items[ri].referrals||0)+1;items[ri].history.unshift({date:new Date().toISOString(),type:'referral',text:`Estrella Brinky por recomendar a ${c.name}`});c.history.unshift({date:new Date().toISOString(),type:'referral',text:`Primera Estrella Brinky usando la referencia ${ref}`});c.referredBy=items[ri].id;queueLoyaltyMessage(items[ri],'referral',`ref-${c.id}`)}}items.unshift(c);setLoyalty(items);queueLoyaltyMessage(c,'welcome',`welcome-${c.id}`);e.target.reset();renderMessages();alert(`Cliente registrado con 1 Estrella de Bienvenida. Código: ${c.code}`)})
 $('saveLoyaltySettings')?.addEventListener('click',()=>{const data={r1:Math.max(1,Number($('reward1Stamps').value||4)),n1:$('reward1Name').value.trim()||'Primer premio',r2:Math.max(1,Number($('reward2Stamps').value||8)),n2:$('reward2Name').value.trim()||'Premio principal'};if(data.r2<=data.r1){alert('La segunda meta debe ser mayor que la primera.');return}localStorage.setItem(LOYALTY_SETTINGS_KEY,JSON.stringify(data));renderLoyalty();alert('Configuración guardada.')})
-function loyaltyMessage(c){const s=getLoyaltySettings(),r=rewardStatus(c),filled='⭐'.repeat(Math.min(Number(c.stamps||0),s.r2)),empty='⬜'.repeat(Math.max(0,s.r2-Number(c.stamps||0)));return `🎈 *¡Gracias por elegir Brinky Fiesta!* 🐸\n\n¡Hola *${c.name}*! Tu Tarjeta Digital del Club Brinky ha sido actualizada.\n\n🌟 *Estrellas Brinky:*\n${filled}${empty} (${c.stamps} de ${s.r2})\n\n🎁 *Tus beneficios:*\n⭐ ${s.r1} Estrellas Brinky = *${s.n1}*\n🏆 ${s.r2} Estrellas Brinky = *${s.n2}*\n${r?`\n🎉 *Ya puedes canjear: ${r.name}*\n`:''}\n🤝 *¡Recomienda y gana!*\nComparte tu código: *${c.code}*\nCuando un amigo rente usando tu código, ambos reciben *1 Estrella Brinky extra*.\n\n📱 Conserva el QR de tu tarjeta para identificarla fácilmente.\n\n💙 ¡Gracias por formar parte del Club Brinky!`}
+function loyaltyMessage(c){return applyTemplate(getClubTemplates().update,c)}
 async function fetchQrBlob(c){const r=await fetch(qrUrl(c,700));if(!r.ok)throw new Error('QR');return await r.blob()}
-async function makeLoyaltyCardBlob(c){const s=getLoyaltySettings(),tier=loyaltyTier(c.stamps),next=loyaltyNext(c),canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1500;const g=canvas.getContext('2d');const round=(x,y,w,h,r,fill,stroke)=>{g.beginPath();g.roundRect(x,y,w,h,r);if(fill){g.fillStyle=fill;g.fill()}if(stroke){g.strokeStyle=stroke;g.lineWidth=6;g.stroke()}};const grad=g.createLinearGradient(0,0,1080,1500);grad.addColorStop(0,'#0b9d46');grad.addColorStop(.55,'#087a38');grad.addColorStop(1,'#064f29');g.fillStyle=grad;g.fillRect(0,0,1080,1500);for(let i=0;i<22;i++){g.fillStyle=`rgba(255,255,255,${.02+(i%3)*.01})`;g.beginPath();g.arc((i*197)%1080,(i*271)%1500,30+(i%5)*13,0,Math.PI*2);g.fill()}round(34,34,1012,1432,48,null,tier.name==='DIAMANTE'?'#d9f4ff':tier.name==='ORO'?'#ffd84d':tier.name==='PLATA'?'#e5e7eb':'#d99a63');g.textAlign='center';g.fillStyle='rgba(255,255,255,.08)';g.font='220px Arial';g.fillText('🐸',890,280);g.fillStyle='#fff';g.font='bold 68px Arial';g.fillText('CLUB BRINKY',540,110);g.font='bold 27px Arial';g.fillText('MEMBRESÍA VIP · BRINKY FIESTA',540,157);round(350,180,380,62,31,'rgba(255,255,255,.18)');g.font='bold 28px Arial';g.fillText(`${tier.icon} NIVEL ${tier.name}`,540,221);round(88,265,904,190,30,'#ffffff');g.fillStyle='#123b25';g.font='bold 49px Arial';g.fillText(String(c.name||'CLIENTE').toUpperCase(),540,335);g.fillStyle='#35634a';g.font='30px Arial';g.fillText(`${c.code}  ·  ${c.phone||'Sin teléfono'}`,540,385);g.font='24px Arial';g.fillText(`Miembro desde ${memberSince(c)}`,540,426);g.fillStyle='#fff';g.font='bold 37px Arial';g.fillText(`${c.stamps} de ${s.r2} Estrellas Brinky`,540,515);g.font='58px Arial';g.fillText('★'.repeat(Math.min(Number(c.stamps||0),s.r2))+'☆'.repeat(Math.max(0,s.r2-Number(c.stamps||0))),540,585);const qr=await createImageBitmap(await fetchQrBlob(c));round(312,635,456,456,30,'#fff');g.drawImage(qr,345,668,390,390);g.fillStyle='#fff';g.font='bold 28px Arial';g.fillText('ESCANEA TU TARJETA CLUB BRINKY',540,1140);g.font='23px Arial';g.fillText('QR único de identificación',540,1178);round(90,1215,900,118,26,'rgba(255,255,255,.14)');g.font='bold 28px Arial';const cta=next.left>0?`Te faltan ${next.left} Estrella${next.left===1?'':'s'} para ${next.name}`:`¡Premio disponible: ${next.name}!`;g.fillText(`🎈 ${cta}`,540,1265);g.font='23px Arial';g.fillText(`⭐ ${s.r1} = ${s.n1}   ·   🏆 ${s.r2} = ${s.n2}`,540,1307);g.font='bold 25px Arial';g.fillText(`🤝 Recomienda con ${c.code}: ambos ganan 1 Estrella`,540,1390);g.font='22px Arial';g.fillText('Cada fiesta suma diversión… ¡y también recompensas!',540,1437);return await new Promise(res=>canvas.toBlob(res,'image/png'))}
+async function makeLoyaltyCardBlob(c){
+  const s=getLoyaltySettings(),tier=loyaltyTier(c.stamps),next=loyaltyNext(c),a=getCardAppearance();
+  const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1500;
+  const g=canvas.getContext('2d');
+  const round=(x,y,w,h,r,fill,stroke)=>{g.beginPath();g.roundRect(x,y,w,h,r);if(fill){g.fillStyle=fill;g.fill()}if(stroke){g.strokeStyle=stroke;g.lineWidth=6;g.stroke()}};
+
+  if(a.backgroundMode==='image'&&a.backgroundImage){
+    try{
+      const bg=await loadImageAsCanvas(a.backgroundImage);
+      g.drawImage(bg,0,0,1080,1500);
+      g.fillStyle=`rgba(0,0,0,${Number(a.overlay||0)})`;g.fillRect(0,0,1080,1500);
+    }catch{
+      const grad=g.createLinearGradient(0,0,1080,1500);grad.addColorStop(0,a.primary);grad.addColorStop(1,a.secondary);g.fillStyle=grad;g.fillRect(0,0,1080,1500);
+    }
+  }else if(a.backgroundMode==='solid'){
+    g.fillStyle=a.primary;g.fillRect(0,0,1080,1500);
+  }else{
+    const grad=g.createLinearGradient(0,0,1080,1500);grad.addColorStop(0,a.primary);grad.addColorStop(.55,a.secondary);grad.addColorStop(1,a.primary);g.fillStyle=grad;g.fillRect(0,0,1080,1500);
+  }
+
+  for(let i=0;i<22;i++){g.fillStyle=`rgba(255,255,255,${.02+(i%3)*.01})`;g.beginPath();g.arc((i*197)%1080,(i*271)%1500,30+(i%5)*13,0,Math.PI*2);g.fill()}
+  round(34,34,1012,1432,48,null,tier.name==='DIAMANTE'?'#d9f4ff':tier.name==='ORO'?'#ffd84d':tier.name==='PLATA'?'#e5e7eb':'#d99a63');
+  g.textAlign='center';g.fillStyle='rgba(255,255,255,.08)';g.font='220px Arial';g.fillText('🐸',890,280);
+  g.fillStyle=a.text;g.font='bold 68px Arial';g.fillText('CLUB BRINKY',540,110);
+  g.font='bold 27px Arial';g.fillText('MEMBRESÍA VIP · BRINKY FIESTA',540,157);
+  round(350,180,380,62,31,'rgba(255,255,255,.18)');
+  g.font='bold 28px Arial';g.fillText(`${tier.icon} NIVEL ${tier.name}`,540,221);
+  round(88,265,904,190,30,'rgba(255,255,255,.94)');
+  g.fillStyle='#123b25';g.font='bold 49px Arial';g.fillText(String(c.name||'CLIENTE').toUpperCase(),540,335);
+  g.fillStyle='#35634a';g.font='30px Arial';g.fillText(`${c.code}  ·  ${c.phone||'Sin teléfono'}`,540,385);
+  g.font='24px Arial';g.fillText(`Miembro desde ${memberSince(c)}`,540,426);
+  g.fillStyle=a.text;g.font='bold 37px Arial';g.fillText(`${c.stamps} de ${s.r2} Estrellas Brinky`,540,515);
+  g.fillStyle=a.star;g.font='58px Arial';g.fillText('★'.repeat(Math.min(Number(c.stamps||0),s.r2))+'☆'.repeat(Math.max(0,s.r2-Number(c.stamps||0))),540,585);
+  const qr=await createImageBitmap(await fetchQrBlob(c));round(312,635,456,456,30,'#fff');g.drawImage(qr,345,668,390,390);
+  g.fillStyle=a.text;g.font='bold 28px Arial';g.fillText('ESCANEA TU TARJETA CLUB BRINKY',540,1140);
+  g.font='23px Arial';g.fillText('QR único de identificación',540,1178);
+  round(90,1215,900,118,26,'rgba(255,255,255,.14)');
+  g.font='bold 28px Arial';const cta=next.left>0?`Te faltan ${next.left} Estrella${next.left===1?'':'s'} para ${next.name}`:`¡Premio disponible: ${next.name}!`;
+  g.fillText(`🎈 ${cta}`,540,1265);g.font='23px Arial';g.fillText(`⭐ ${s.r1} = ${s.n1}   ·   🏆 ${s.r2} = ${s.n2}`,540,1307);
+  g.font='bold 25px Arial';g.fillText(`🤝 Recomienda con ${c.code}: ambos ganan 1 Estrella`,540,1390);
+  g.font='22px Arial';g.fillText('Cada fiesta suma diversión… ¡y también recompensas!',540,1437);
+  return await new Promise(res=>canvas.toBlob(res,'image/png'));
+}
 function saveBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 $('searchLoyalty')?.addEventListener('input',renderLoyalty);$('closeLoyaltyModal')?.addEventListener('click',()=>$('loyaltyModal').classList.add('hidden'));$('addStampBtn')?.addEventListener('click',()=>updateCurrentLoyalty(1,'Estrella Brinky agregada manualmente','stamp'));$('removeStampBtn')?.addEventListener('click',()=>updateCurrentLoyalty(-1,'Estrella Brinky retirada manualmente'));$('redeemRewardBtn')?.addEventListener('click',()=>{const c=getLoyalty().find(x=>x.id===currentLoyaltyId),r=c&&rewardStatus(c);if(!r){alert('El cliente todavía no tiene un premio disponible.');return}if(confirm(`¿Canjear ${r.name} y descontar ${r.target} Estrellas Brinky?`))updateCurrentLoyalty(-r.target,`Premio canjeado: ${r.name}`,'redeem')});
 $('shareLoyaltyWhatsApp')?.addEventListener('click',async()=>{const c=getLoyalty().find(x=>x.id===currentLoyaltyId);if(!c)return;try{const blob=await makeLoyaltyCardBlob(c),file=new File([blob],`Tarjeta_Club_Brinky_${c.code}.png`,{type:'image/png'}),text=loyaltyMessage(c);if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({title:`Tarjeta Club Brinky ${c.code}`,text,files:[file]});}else{saveBlob(blob,file.name);const phone=normalizedPhone(c.phone);window.open(`https://wa.me/${phone?'52'+phone:''}?text=${encodeURIComponent(text+'\n\n📎 La tarjeta con el QR se descargó como imagen. Adjúntala en este chat.')}`,'_blank');alert('La tarjeta con QR se descargó como imagen. WhatsApp se abrirá para que la adjuntes.');}}catch(e){if(e?.name!=='AbortError')alert('No se pudo generar o compartir la tarjeta con QR. Verifica tu conexión a internet.')}});
 $('downloadLoyaltyQr')?.addEventListener('click',async()=>{const c=getLoyalty().find(x=>x.id===currentLoyaltyId);if(!c)return;try{saveBlob(await fetchQrBlob(c),`QR_Club_Brinky_${c.code}.png`)}catch{alert('No se pudo descargar el QR. Verifica tu conexión a internet.')}});
 $('shareLoyaltyCard')?.addEventListener('click',async()=>{const c=getLoyalty().find(x=>x.id===currentLoyaltyId);if(!c)return;try{const blob=await makeLoyaltyCardBlob(c),file=new File([blob],`Tarjeta_Club_Brinky_${c.code}.png`,{type:'image/png'});if(navigator.canShare?.({files:[file]})){await navigator.share({title:'Tarjeta Club Brinky',text:loyaltyMessage(c),files:[file]})}else{saveBlob(blob,file.name);alert('La tarjeta se descargó como imagen. Puedes adjuntarla en WhatsApp.')}}catch(e){if(e?.name!=='AbortError')alert('No se pudo compartir la tarjeta. Verifica tu conexión a internet.')}});
+
+document.querySelectorAll('[data-card-theme]').forEach(btn=>btn.addEventListener('click',()=>{
+  const preset=CARD_THEME_PRESETS[btn.dataset.cardTheme];if(!preset)return;
+  $('cardBackgroundMode').value=preset.backgroundMode;
+  $('cardPrimaryColor').value=preset.primary;
+  $('cardSecondaryColor').value=preset.secondary;
+  $('cardTextColor').value=preset.text;
+  $('cardStarColor').value=preset.star;
+  $('cardOverlayOpacity').value=preset.overlay;
+}));
+$('cardBackgroundImage')?.addEventListener('change',async e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  if(file.size>12*1024*1024){alert('La imagen es demasiado grande. Elige una menor de 12 MB.');e.target.value='';return}
+  try{
+    const resized=await resizeBackgroundFile(file);
+    const data={...readAppearanceControls(),backgroundMode:'image',backgroundImage:resized};
+    setCardAppearance(data);fillCustomizationControls();alert('Imagen de fondo preparada. Presiona Guardar apariencia.');
+  }catch{alert('No se pudo procesar la imagen.')}
+});
+$('saveCardAppearance')?.addEventListener('click',()=>{
+  const current=getCardAppearance(),data={...current,...readAppearanceControls()};
+  setCardAppearance(data);applyOnScreenCardAppearance();alert('Apariencia guardada. Se usará automáticamente en las próximas tarjetas.');
+});
+$('restoreCardAppearance')?.addEventListener('click',()=>{
+  if(!confirm('¿Restaurar los colores originales de la tarjeta?'))return;
+  setCardAppearance({...DEFAULT_CARD_APPEARANCE});fillCustomizationControls();applyOnScreenCardAppearance();$('cardAppearancePreview')?.classList.add('hidden');alert('Diseño original restaurado.');
+});
+$('previewCardAppearance')?.addEventListener('click',async()=>{
+  const previous=getCardAppearance(),temporary={...previous,...readAppearanceControls()};
+  setCardAppearance(temporary);
+  const sample=getLoyalty()[0]||{name:'CLIENTE EJEMPLO',code:'BRK-0001',phone:'999 000 0000',stamps:3,createdAt:new Date().toISOString()};
+  try{
+    const blob=await makeLoyaltyCardBlob(sample),img=$('cardAppearancePreview');
+    img.src=URL.createObjectURL(blob);img.classList.remove('hidden');
+  }catch{alert('No se pudo generar la vista previa. Verifica tu conexión para crear el QR.')}
+});
+document.querySelectorAll('[data-template-type]').forEach(btn=>btn.addEventListener('click',()=>{
+  selectedTemplateType=btn.dataset.templateType;loadTemplateEditor();
+}));
+$('saveMessageTemplates')?.addEventListener('click',()=>{
+  const t=getClubTemplates();
+  t[selectedTemplateType]=$('clubMessageTemplate').value;
+  t.facebook=$('clubFacebookLink').value.trim()||COMPANY.facebook;
+  setClubTemplates(t);alert('Plantillas guardadas. Se usarán automáticamente en los mensajes nuevos.');
+});
+$('restoreMessageTemplates')?.addEventListener('click',()=>{
+  if(!confirm('¿Restaurar todos los mensajes originales?'))return;
+  setClubTemplates({...DEFAULT_CLUB_TEMPLATES});fillCustomizationControls();loadTemplateEditor();$('messageTemplatePreview')?.classList.add('hidden');alert('Mensajes originales restaurados.');
+});
+$('previewMessageTemplate')?.addEventListener('click',()=>{
+  const sample=getLoyalty()[0]||{name:'María López',code:'BRK-0001',phone:'999 000 0000',stamps:3,createdAt:new Date().toISOString()};
+  const preview=applyTemplate($('clubMessageTemplate').value,sample),el=$('messageTemplatePreview');
+  el.textContent=preview;el.classList.remove('hidden');
+});
+fillCustomizationControls();
+loadTemplateEditor();
+
 $('printLoyaltyCard')?.addEventListener('click',()=>{document.body.classList.add('printing-loyalty');window.print();setTimeout(()=>document.body.classList.remove('printing-loyalty'),500)});renderLoyalty();
 
 
@@ -1013,48 +1280,11 @@ let messageFilter='pending';
 function getMessages(){try{return JSON.parse(localStorage.getItem(MESSAGES_KEY))||[]}catch{return []}}
 function setMessages(items){localStorage.setItem(MESSAGES_KEY,JSON.stringify(items));renderMessages();updateMessageCounters()}
 function messageTypeLabel(type){return ({welcome:'Bienvenida',update:'Actualización',reward:'Premio desbloqueado',referral:'Referencia'})[type]||'Aviso'}
-function buildClubMessage(c,type){const s=getLoyaltySettings(),r=rewardStatus(c),filled='⭐'.repeat(Math.min(Number(c.stamps||0),s.r2)),empty='☆'.repeat(Math.max(0,s.r2-Number(c.stamps||0)));if(type==='welcome')return `🎉 *¡Bienvenido al Club Brinky Fiesta!* 🐸
-
-Hola *${c.name}*. Tu registro se completó correctamente y recibiste *1 Estrella Brinky de Bienvenida*.
-
-🌟 ${filled}${empty} (${c.stamps} de ${s.r2})
-🆔 Tu código de referencia es: *${c.code}*
-
-🎁 ${s.r1} estrellas = *${s.n1}*
-🏆 ${s.r2} estrellas = *${s.n2}*
-
-🤝 Recomienda a un amigo usando tu código de referencia y, cuando complete su renta, ambos ganan 1 Estrella Brinky.
-
-Síguenos en Facebook: *${COMPANY.facebook}*
-
-¡Gracias por formar parte de Brinky Fiesta! 🎈`;if(type==='referral')return `🤝 *¡Ganaste una Estrella Brinky por recomendar!*
-
-Hola *${c.name}*. Una persona utilizó tu código *${c.code}* y tu tarjeta fue actualizada.
-
-🌟 ${filled}${empty} (${c.stamps} de ${s.r2})
-
-¡Sigue recomendando y acumulando recompensas! 🐸🎉`;if(type==='reward'&&r)return `🎉 *¡RECOMPENSA DESBLOQUEADA!* 🎁
-
-Hola *${c.name}*. Ya acumulaste *${c.stamps} Estrellas Brinky* y puedes disfrutar de:
-
-🏆 *${r.name}*
-
-Escríbenos al realizar tu próxima reservación para aplicar tu beneficio.
-
-Código: *${c.code}*
-Facebook: *${COMPANY.facebook}*`;return `⭐ *¡Tu Tarjeta Club Brinky fue actualizada!*
-
-Hola *${c.name}*. Acabas de recibir una nueva Estrella Brinky.
-
-🌟 ${filled}${empty} (${c.stamps} de ${s.r2})
-
-🎁 ${s.r1} estrellas = *${s.n1}*
-🏆 ${s.r2} estrellas = *${s.n2}*
-
-Código de referencia: *${c.code}*
-Recuerda: recomienda a un amigo usando tu código y ambos ganan 1 estrella cuando complete su renta.
-
-Facebook: *${COMPANY.facebook}*`; }
+function buildClubMessage(c,type){
+  const templates=getClubTemplates();
+  const key=['welcome','update','reward','referral'].includes(type)?type:'update';
+  return applyTemplate(templates[key],c);
+}
 function queueLoyaltyMessage(c,type,dedupeKey=''){if(!c)return;const items=getMessages(),key=dedupeKey||`${type}-${c.id}-${c.stamps}`;if(items.some(m=>m.dedupeKey===key))return;items.unshift({id:'MSG-'+Date.now()+'-'+Math.random().toString(36).slice(2,6),clientId:c.id,clientName:c.name,phone:c.phone,type,text:buildClubMessage(c,type),status:'pending',dedupeKey:key,createdAt:new Date().toISOString(),sentAt:null});localStorage.setItem(MESSAGES_KEY,JSON.stringify(items));updateMessageCounters()}
 function updateMessageCounters(){const n=getMessages().filter(m=>m.status==='pending').length;if($('messagePendingCount'))$('messagePendingCount').textContent=n;if($('statMessages'))$('statMessages').textContent=n;const b=$('navMessageBadge');if(b){b.textContent=n;b.classList.toggle('hidden',n===0)}}
 function renderMessages(){if(!$('messagesList'))return;updateMessageCounters();const q=($('searchMessages')?.value||'').toLowerCase().trim();const items=getMessages().filter(m=>(messageFilter==='all'||m.status===messageFilter)&&(!q||[m.clientName,m.phone,messageTypeLabel(m.type),m.text].some(v=>String(v||'').toLowerCase().includes(q))));$('messagesList').innerHTML=items.length?items.map(m=>`<div class="saved-item message-item"><div><div class="message-title"><span class="message-kind ${m.type}">${messageTypeLabel(m.type)}</span><strong>${escapeHtml(m.clientName||'Cliente')}</strong></div><div class="saved-meta">${escapeHtml(m.phone||'Sin teléfono')} · ${new Date(m.createdAt).toLocaleString('es-MX')}</div><p class="message-snippet">${escapeHtml(String(m.text||'').replace(/[*_]/g,'').slice(0,145))}${String(m.text||'').length>145?'…':''}</p></div><div class="saved-actions"><button class="btn btn-primary" onclick="openMessage('${m.id}')">${m.status==='pending'?'Revisar y enviar':'Ver mensaje'}</button>${m.status==='pending'?`<button class="btn btn-light" onclick="cancelMessage('${m.id}')">Descartar</button>`:''}</div></div>`).join(''):'<div class="empty">No hay mensajes en esta bandeja.</div>'}

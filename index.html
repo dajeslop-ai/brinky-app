@@ -15,7 +15,7 @@
 </header>
 <main>
 <section id="homeView" class="view active">
-  <div class="welcome card"><div><span class="badge">Versión 6.4 · Menú y saldos</span><h2>Bienvenido</h2><p>Administra tus contratos desde el smartphone.</p></div><img src="icons/icon-192.png?v=37" alt="Brinky"></div>
+  <div class="welcome card"><div><span class="badge">Versión 6.5 · Personalización Club</span><h2>Bienvenido</h2><p>Administra tus contratos desde el smartphone.</p></div><img src="icons/icon-192.png?v=37" alt="Brinky"></div>
   <div class="stats">
     <article class="stat card"><b id="statContracts">0</b><span>Contratos guardados</span></article>
     <article class="stat card"><b id="statUpcoming">0</b><span>Próximos eventos</span></article>
@@ -123,6 +123,66 @@
     <label>Primera meta (Estrellas Brinky)<input id="reward1Stamps" type="number" min="1" value="4"></label><label>Premio<input id="reward1Name" value="50% de descuento"></label>
     <label>Segunda meta (Estrellas Brinky)<input id="reward2Stamps" type="number" min="1" value="8"></label><label>Premio<input id="reward2Name" value="1 renta gratis"></label>
   </div><button id="saveLoyaltySettings" class="btn btn-primary">Guardar configuración</button></section>
+
+  <section class="card club-customization">
+    <div class="section-head"><div><h3>🎨 Personalización Club Brinky</h3><p>Cambia la apariencia y los mensajes sin modificar la programación.</p></div></div>
+
+    <details open>
+      <summary><b>Apariencia de la tarjeta</b></summary>
+      <div class="preset-row">
+        <button type="button" class="theme-preset" data-card-theme="green">Verde Brinky</button>
+        <button type="button" class="theme-preset" data-card-theme="blue">Azul Fiesta</button>
+        <button type="button" class="theme-preset" data-card-theme="gold">Dorado VIP</button>
+        <button type="button" class="theme-preset" data-card-theme="rainbow">Diversión</button>
+      </div>
+      <div class="grid two">
+        <label>Tipo de fondo
+          <select id="cardBackgroundMode">
+            <option value="gradient">Degradado</option>
+            <option value="solid">Color sólido</option>
+            <option value="image">Imagen de fondo</option>
+          </select>
+        </label>
+        <label>Color principal<input id="cardPrimaryColor" type="color" value="#0b9d46"></label>
+        <label>Color secundario<input id="cardSecondaryColor" type="color" value="#064f29"></label>
+        <label>Color del texto<input id="cardTextColor" type="color" value="#ffffff"></label>
+        <label>Color de las estrellas<input id="cardStarColor" type="color" value="#ffd84d"></label>
+        <label>Oscurecer imagen de fondo
+          <input id="cardOverlayOpacity" type="range" min="0" max="0.8" step="0.05" value="0.3">
+        </label>
+        <label class="full">Imagen de fondo opcional
+          <input id="cardBackgroundImage" type="file" accept="image/*">
+          <span class="field-help">La aplicación la redimensiona y guarda en el dispositivo. La estructura de la tarjeta permanece fija.</span>
+        </label>
+      </div>
+      <div class="custom-actions">
+        <button id="previewCardAppearance" type="button" class="btn btn-blue">Vista previa</button>
+        <button id="saveCardAppearance" type="button" class="btn btn-primary">Guardar apariencia</button>
+        <button id="restoreCardAppearance" type="button" class="btn btn-light">Restaurar diseño original</button>
+      </div>
+      <img id="cardAppearancePreview" class="card-appearance-preview hidden" alt="Vista previa de tarjeta">
+    </details>
+
+    <details>
+      <summary><b>Plantillas de WhatsApp</b></summary>
+      <p class="field-help">Variables disponibles: {NOMBRE}, {CODIGO}, {ESTRELLAS}, {META}, {FALTANTES}, {RECOMPENSA}, {PROGRESO}, {FACEBOOK}.</p>
+      <div class="template-tabs">
+        <button type="button" class="template-tab active" data-template-type="welcome">Bienvenida</button>
+        <button type="button" class="template-tab" data-template-type="update">Actualización</button>
+        <button type="button" class="template-tab" data-template-type="reward">Premio</button>
+        <button type="button" class="template-tab" data-template-type="referral">Referencia</button>
+      </div>
+      <label>Plantilla seleccionada<textarea id="clubMessageTemplate" rows="14"></textarea></label>
+      <label>Enlace o nombre de Facebook<input id="clubFacebookLink" placeholder="https://facebook.com/..."></label>
+      <div class="custom-actions">
+        <button id="previewMessageTemplate" type="button" class="btn btn-blue">Vista previa</button>
+        <button id="saveMessageTemplates" type="button" class="btn btn-primary">Guardar plantillas</button>
+        <button id="restoreMessageTemplates" type="button" class="btn btn-light">Restaurar mensajes originales</button>
+      </div>
+      <pre id="messageTemplatePreview" class="message-template-preview hidden"></pre>
+    </details>
+  </section>
+
   <section class="card"><div class="section-head"><div><h3>Registrar cliente</h3><p>El teléfono evita registros duplicados.</p></div></div><form id="loyaltyForm" class="grid two">
     <label>Nombre completo<input id="loyaltyName" required></label><label>Teléfono / WhatsApp<input id="loyaltyPhone" required inputmode="tel"></label>
     <label>Fecha de cumpleaños<input id="loyaltyBirthday" type="date"></label><label>Código de quien recomendó<input id="loyaltyReferrer" placeholder="Ej. BRK-0001"></label>
@@ -152,5 +212,5 @@
 
 <div id="messageModal" class="modal hidden"><div class="modal-content message-modal"><div class="modal-actions"><button id="closeMessageModal" class="btn btn-light">Cerrar</button><button id="saveMessageEdit" class="btn btn-blue">Guardar cambios</button><button id="sendMessageWhatsApp" class="btn btn-whatsapp">Compartir tarjeta y mensaje</button></div><section class="card"><span id="messageTypeBadge" class="badge"></span><h3 id="messageClientName"></h3><p id="messageClientPhone" class="saved-meta"></p><label>Mensaje<textarea id="messageEditor" rows="14"></textarea></label><p class="field-help">En celulares compatibles se abrirá el menú para compartir la tarjeta PNG junto con el mensaje. Si el navegador no lo permite, la tarjeta se descargará y WhatsApp se abrirá con el texto preparado.</p></section></div></div>
 
-<script src="app.js?v=61"></script>
+<script src="app.js?v=65"></script>
 </body></html>

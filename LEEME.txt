@@ -1,29 +1,45 @@
-BRINKY SUITE PRO v6.4 — MENÚ Y SALDOS
+BRINKY SUITE PRO v6.5 — PERSONALIZACIÓN CLUB BRINKY
 
-CAMBIOS REALIZADOS
+NOVEDADES
 
-MENÚ PRINCIPAL
-- “Acciones rápidas” ahora se llama “Menú principal”.
-- Orden:
-  1. Nueva cotización
-  2. Nuevo contrato
-  3. Contratos
-  4. Club Brinky
-  5. Centro de mensajes
-  6. Reportes
+APARIENCIA DE LA TARJETA
+- Conserva intacta la estructura y funcionalidad.
+- Permite cambiar:
+  • fondo sólido;
+  • degradado;
+  • imagen de fondo;
+  • color principal;
+  • color secundario;
+  • color del texto;
+  • color de las estrellas.
+- Estilos rápidos:
+  • Verde Brinky;
+  • Azul Fiesta;
+  • Dorado VIP;
+  • Diversión.
+- Vista previa antes de usar el diseño.
+- Restauración del diseño original.
+- Las imágenes grandes se redimensionan y comprimen automáticamente.
 
-MENÚ INFERIOR
-- Orden:
-  Inicio / Cotizar / Nuevo / Contratos / Club / Mensajes / Reportes
-- Reportes queda al final.
-- Mensajes queda en penúltimo lugar.
-- En pantallas angostas se permite desplazamiento horizontal.
+PLANTILLAS DE WHATSAPP
+- Mensajes editables para:
+  • bienvenida;
+  • actualización;
+  • premio desbloqueado;
+  • referencia.
+- Variables automáticas:
+  {NOMBRE}, {CODIGO}, {ESTRELLAS}, {META}, {FALTANTES},
+  {RECOMPENSA}, {PROGRESO}, {FACEBOOK}.
+- Enlace o nombre de Facebook editable.
+- Vista previa del mensaje.
+- Restauración de mensajes originales.
+- Las plantillas guardadas se usan en los mensajes nuevos.
 
-REPORTES
-- Un contrato marcado como REALIZADO se considera liquidado.
-- Su saldo pendiente aparece como $0.
-- El importe total pasa a Cobrado.
-- La Ganancia real se recalcula con el cobro total menos gastos.
-- Al marcarlo como realizado, el contrato guarda saldo 0 y cobro total.
+REGLA DE REFERENCIAS
+- Se conserva una sola estrella para el cliente que usa la referencia.
+- Se conserva una sola estrella para quien recomienda.
+- Se corrigió también el alta manual desde Club Brinky para evitar dos estrellas.
 
-Se conservan las funciones de captura rápida, Club Brinky y referencias de la v6.3.
+IMPORTANTE
+- Las personalizaciones se guardan en el dispositivo.
+- Se recomienda incluirlas en los respaldos de la aplicación.
