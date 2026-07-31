@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#16a34a"><title>Brinky Suite Pro</title>
 <link rel="manifest" href="manifest.json"><link rel="icon" href="icons/icon-192.png?v=37"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=36">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Brinky Suite">
-<link rel="stylesheet" href="styles.css?v=51">
+<link rel="stylesheet" href="styles.css?v=60">
 </head>
 <body>
 <header class="topbar">
@@ -15,7 +15,7 @@
 </header>
 <main>
 <section id="homeView" class="view active">
-  <div class="welcome card"><div><span class="badge">Versión 5.1</span><h2>Bienvenido</h2><p>Administra tus contratos desde el smartphone.</p></div><img src="icons/icon-192.png?v=37" alt="Brinky"></div>
+  <div class="welcome card"><div><span class="badge">Versión 6.0 · Fase 1</span><h2>Bienvenido</h2><p>Administra tus contratos desde el smartphone.</p></div><img src="icons/icon-192.png?v=37" alt="Brinky"></div>
   <div class="stats">
     <article class="stat card"><b id="statContracts">0</b><span>Contratos guardados</span></article>
     <article class="stat card"><b id="statUpcoming">0</b><span>Próximos eventos</span></article>
@@ -121,21 +121,24 @@
   </div><button id="saveLoyaltySettings" class="btn btn-primary">Guardar configuración</button></section>
   <section class="card"><div class="section-head"><div><h3>Registrar cliente</h3><p>El teléfono evita registros duplicados.</p></div></div><form id="loyaltyForm" class="grid two">
     <label>Nombre completo<input id="loyaltyName" required></label><label>Teléfono / WhatsApp<input id="loyaltyPhone" required inputmode="tel"></label>
-    <label>Fecha de cumpleaños<input id="loyaltyBirthday" type="date"></label><label>Colonia / municipio<input id="loyaltyLocation" placeholder="Ej. Gran Santa Cruz, Umán"></label><label>Código de quien recomendó<input id="loyaltyReferrer" placeholder="Ej. BRK-0001"></label>
+    <label>Fecha de cumpleaños<input id="loyaltyBirthday" type="date"></label><label>Código de quien recomendó<input id="loyaltyReferrer" placeholder="Ej. BRK-0001"></label>
     <label class="full">Notas<input id="loyaltyNotes" placeholder="Preferencias, colonia, festejado..."></label><button class="btn btn-primary" type="submit">Guardar cliente</button>
   </form></section>
   <section class="card"><div class="section-head"><div><h3>Clientes del Club</h3><p>Busca por nombre, teléfono o código.</p></div></div><input id="searchLoyalty" class="search" placeholder="Buscar cliente"><div id="loyaltyList"></div></section>
 </section>
+</main>
 
 <section id="messagesView" class="view">
-  <section class="card hero"><div><span class="badge">Centro de mensajes</span><h2>WhatsApp del Club Brinky</h2><p>Revisa, edita y envía mensajes de bienvenida, actualización, premios y referidos.</p></div><div class="folio">🔔 <strong id="messagePendingCount">0</strong> pendientes</div></section>
+  <section class="card hero"><div><span class="badge">Centro de mensajes</span><h2>WhatsApp asistido</h2><p>Revisa, edita y envía mensajes sin perder el control.</p></div><div class="folio">🔔 <strong id="messagePendingCount">0</strong> pendientes</div></section>
   <section class="card">
-    <div class="message-toolbar"><div class="message-tabs"><button id="showPendingMessages" class="btn btn-primary">Pendientes</button><button id="showSentMessages" class="btn btn-light">Enviados</button></div><button id="clearSentMessages" class="btn btn-danger-light">Limpiar enviados</button></div>
-    <div id="messageList"></div>
+    <div class="section-head"><div><h3>Bandeja de mensajes</h3><p>Los mensajes se preparan automáticamente y tú confirmas el envío.</p></div><button id="clearSentMessages" class="btn btn-light">Limpiar enviados</button></div>
+    <div class="message-tabs"><button class="message-tab active" data-message-filter="pending">Pendientes</button><button class="message-tab" data-message-filter="sent">Enviados</button><button class="message-tab" data-message-filter="all">Todos</button></div>
+    <input id="searchMessages" class="search" placeholder="Buscar por nombre, teléfono o tipo de mensaje">
+    <div id="messagesList"></div>
   </section>
 </section>
-</main>
-<nav class="bottom-nav"><button data-go="home" class="active">⌂<span>Inicio</span></button><button data-go="new">＋<span>Contrato</span></button><button data-go="quotes">🧾<span>Cotizar</span></button><button data-go="contracts">▤<span>Contratos</span></button><button data-go="reports">▥<span>Reportes</span></button><button data-go="loyalty">⭐<span>Club</span></button><button data-go="messages">💬<span>Mensajes</span></button></nav>
+
+<nav class="bottom-nav"><button data-go="home" class="active">⌂<span>Inicio</span></button><button data-go="new">＋<span>Contrato</span></button><button data-go="quotes">🧾<span>Cotizar</span></button><button data-go="contracts">▤<span>Contratos</span></button><button data-go="reports">▥<span>Reportes</span></button><button data-go="loyalty">⭐<span>Club</span></button><button data-go="messages">💬<span>Mensajes</span><i id="navMessageBadge" class="nav-badge hidden">0</i></button></nav>
 
 <template id="serviceTemplate"><div class="service-row"><label class="service-main">Servicio<select class="service-name" required><option value="" selected disabled>SELECCIONA UN SERVICIO</option><option>BRINCOLÍN CASTILLO ROSA 4 X 5 X 2.5</option><option>CASTILLO AZUL 4 X 5 X 2.5</option><option>ESCALADORA 3 X 6 X 3</option><option>TOBOGÁN ACUÁTICO 3 X 7 X 2.5</option><option>PISCINA INFLABLE 3 X 3</option><option>MOBILIARIO PASTEL INFANTIL (1 MESA / 10 SILLITAS)</option><option>FUTBOLITO DE MESA 3 PELOTAS</option><option>PAQ. 3 CABALLETES DOBLES + 6 SILLITAS</option><option>PAQ. 6 CABALLETES DOBLES + 12 SILLITAS</option><option>MAQUINITA PELUCHERA</option><option>PREMIOS 25</option><option>PREMIOS 30</option><option>PREMIOS 40</option><option>PREMIOS 50</option><option>OTRO</option></select><input class="service-custom hidden" placeholder="Escribe el servicio manualmente"><small class="service-status hidden"></small></label><label>Cantidad<input class="service-qty" type="number" value="1" min="1"></label><label>Tiempo<select class="service-duration"><option value="1">1 hora</option><option value="2">2 horas</option><option value="3">3 horas</option><option value="4" selected>4 horas</option><option value="5">5 horas</option><option value="6">6 horas</option><option value="8">8 horas</option><option value="12">Todo el día</option><option value="custom">Personalizado</option></select></label><label>Precio<input class="service-price" type="number" min="0" step=".01" value="0"></label><button type="button" class="remove-service" aria-label="Eliminar">×</button></div></template>
 <div id="quotePreviewModal" class="modal hidden"><div class="modal-content"><div class="modal-actions no-print"><button id="closeQuotePreview" class="btn btn-light">Cerrar</button><button id="convertQuoteBtn" class="btn btn-primary">Convertir en contrato</button><button id="shareQuote" class="btn btn-whatsapp">Enviar por WhatsApp</button><button id="downloadQuotePdf" class="btn btn-pink">Guardar PDF</button><button id="printQuote" class="btn btn-blue">Imprimir</button></div><article id="quotePreview" class="contract"></article></div></div>
@@ -143,6 +146,7 @@
 
 <div id="loyaltyModal" class="modal hidden"><div class="modal-content loyalty-modal"><div class="modal-actions no-print"><button id="closeLoyaltyModal" class="btn btn-light">Cerrar</button><button id="shareLoyaltyWhatsApp" class="btn btn-whatsapp">Enviar tarjeta con QR</button><button id="downloadLoyaltyQr" class="btn btn-light">Descargar QR</button><button id="shareLoyaltyCard" class="btn btn-pink">Compartir tarjeta</button><button id="printLoyaltyCard" class="btn btn-blue">Imprimir tarjeta</button></div><article id="loyaltyCard" class="loyalty-card"></article><section class="card no-print"><h3>Movimientos</h3><div class="loyalty-controls"><button id="addStampBtn" class="btn btn-primary">+ Agregar Estrella</button><button id="removeStampBtn" class="btn btn-light">− Quitar Estrella</button><button id="redeemRewardBtn" class="btn btn-pink">🎁 Canjear premio</button></div><div id="loyaltyHistory"></div></section></div></div>
 
-<div id="messageEditModal" class="modal hidden"><div class="modal-content message-modal"><div class="modal-actions"><button id="closeMessageEdit" class="btn btn-light">Cerrar</button><button id="saveMessageEdit" class="btn btn-primary">Guardar cambios</button></div><section class="card"><h3>Editar mensaje</h3><p id="messageEditRecipient"></p><textarea id="messageEditText" rows="16"></textarea></section></div></div>
-<script src="app.js?v=51"></script>
+<div id="messageModal" class="modal hidden"><div class="modal-content message-modal"><div class="modal-actions"><button id="closeMessageModal" class="btn btn-light">Cerrar</button><button id="saveMessageEdit" class="btn btn-blue">Guardar cambios</button><button id="sendMessageWhatsApp" class="btn btn-whatsapp">Abrir WhatsApp</button></div><section class="card"><span id="messageTypeBadge" class="badge"></span><h3 id="messageClientName"></h3><p id="messageClientPhone" class="saved-meta"></p><label>Mensaje<textarea id="messageEditor" rows="14"></textarea></label><p class="field-help">WhatsApp se abrirá con el texto preparado. Después confirma en la app si fue enviado.</p></section></div></div>
+
+<script src="app.js?v=60"></script>
 </body></html>

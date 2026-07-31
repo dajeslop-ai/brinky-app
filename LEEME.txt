@@ -1,13 +1,66 @@
-BRINKY SUITE PRO v5.1 - CENTRO DE MENSAJES
+BRINKY SUITE PRO 6.0 - FASE 1
+CENTRO DE MENSAJES WHATSAPP
 
-Novedades:
+CAMBIOS REALES INCLUIDOS:
 - Estrella de bienvenida automática para nuevos miembros.
-- Mensaje de bienvenida pendiente al registrar un miembro.
-- Mensajes de actualización al agregar estrellas.
-- Mensajes especiales por premio desbloqueado y referidos.
-- Centro de Mensajes con bandejas Pendientes y Enviados.
-- Vista previa, edición, envío por WhatsApp y control de duplicados.
-- Contadores de miembros y mensajes pendientes en Inicio.
+- Centro de mensajes con Pendientes, Enviados y Todos.
+- Mensajes automáticos de bienvenida, actualización, premio y referencia.
+- Vista previa, edición y apertura de WhatsApp.
+- Confirmación manual para marcar como enviado.
+- Protección contra mensajes duplicados.
+- Contadores de socios y mensajes pendientes en Inicio.
+- Datos guardados localmente en este dispositivo.
 
-Publicación: sube el contenido de esta carpeta a GitHub o arrastra el ZIP a Netlify.
-Los datos continúan guardándose localmente en el dispositivo mediante localStorage.
+BRINKY SUITE PRO 3.10
+
+NOVEDAD: disponibilidad visible antes de generar el contrato.
+- Al elegir fecha, hora inicial y hora final, los equipos ya reservados aparecen como NO DISPONIBLE.
+- Las opciones ocupadas quedan bloqueadas en la lista.
+- Se muestra el horario reservado.
+- Si un equipo seleccionado pasa a estar ocupado al cambiar el horario, se retira automáticamente y aparece una advertencia.
+- Los premios siguen disponibles por ser consumibles.
+- Se mantiene la validación final de doble reserva de la versión 3.2.
+
+PUBLICACIÓN EN NETLIFY
+1. Descomprime el ZIP.
+2. En Netlify abre Deploys/Despliegues.
+3. Arrastra la carpeta brinky_suite_pro_v3_3 completa.
+4. Cierra completamente la app y vuelve a abrirla.
+5. Verifica que muestre Versión 3.10. Si no cambia, reinstala la PWA o borra los datos del sitio.
+
+
+VERSIÓN 3.10
+- “Cerrar y nuevo” limpia completamente todos los campos, servicios, pagos, observaciones y firma.
+- El siguiente contrato inicia con fecha, horarios y servicio sin seleccionar.
+
+
+NUEVO EN 3.6: Reportes mensuales, registro de gastos y cálculo de ganancia real.
+
+NUEVO EN 3.8: Llamado a la acción al final del contrato para solicitar recomendaciones en Facebook, con banner publicitario de Brinky Fiesta incluido en la vista, impresión y PDF.
+
+
+NUEVO EN V3.8: módulo de cotizaciones con vigencia, estados, PDF, WhatsApp y conversión directa a contrato.
+
+
+NUEVO EN V3.9: opción de DESCUENTO en contratos. La app calcula subtotal, resta el descuento y actualiza automáticamente total y saldo. El descuento aparece en la vista, impresión, PDF, WhatsApp e informes mediante el total final.
+
+
+NUEVO EN V3.10: campo Razón del descuento debajo de Descuento. Se guarda y aparece en vista previa, impresión, PDF y al compartir por WhatsApp.
+
+
+VERSIÓN 4.2 - CLUB BRINKY QR
+- Estrellas Brinky en lugar de sellos.
+- QR único descargable por cliente.
+- Tarjeta digital compartible como imagen.
+- Mensaje de WhatsApp con dinámica de recompensas y referencias.
+
+NUEVO EN V4.2: el botón Enviar tarjeta con QR comparte la tarjeta completa como imagen PNG con el QR visible y el mensaje de fidelidad. En navegadores sin soporte, descarga la imagen y abre WhatsApp para adjuntarla.
+
+VERSIÓN 5.0 - TARJETA VIP CLUB BRINKY
+- Nuevo diseño tipo membresía premium.
+- Nombre y código ahora aparecen correctamente en la imagen (se corrigió texto blanco sobre fondo blanco).
+- Niveles Bronce, Plata, Oro y Diamante.
+- Miembro desde, siguiente recompensa y estrellas faltantes.
+- QR más claro y llamado a la acción.
+- Animación de entrada y brillo dentro de la aplicación.
+- Imagen vertical optimizada para compartir por WhatsApp.
