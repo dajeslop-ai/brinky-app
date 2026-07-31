@@ -1,0 +1,5 @@
+BRINKY FIESTA 2.0 ANDROID
+
+Esta carpeta es un proyecto de Android Studio, no se sube a GitHub Pages.
+Abre la carpeta completa desde Android Studio para generar el APK o AAB.
+El juego está dentro de app/src/main/assets/game/index.html.
