@@ -78,11 +78,65 @@ function recalculateBalance(){
   $('balance').value=Math.max(0,total-dep).toFixed(2);
 }
 
+
+let contractReferralValidation={valid:false,client:null,reason:'empty'};
+
+function normalizeReferralCode(value=''){
+  return String(value||'').trim().toUpperCase().replace(/\s+/g,'');
+}
+function setContractReferralStatus(kind,message,client=null){
+  contractReferralValidation={valid:kind==='valid',client:kind==='valid'?client:null,reason:kind};
+  const el=$('contractReferralStatus');
+  if(!el)return;
+  el.className=`referral-status ${kind}`;
+  el.textContent=message;
+}
+function validateContractReferralCode(){
+  const input=$('contractReferralCode');
+  if(!input)return true;
+  const code=normalizeReferralCode(input.value);
+  input.value=code;
+  if(!code){
+    setContractReferralStatus('neutral','Escribe un código para validarlo automáticamente.');
+    return true;
+  }
+  const member=getLoyalty().find(c=>normalizeReferralCode(c.code)===code);
+  if(!member){
+    setContractReferralStatus('invalid','❌ Código no encontrado en Club Brinky.');
+    return false;
+  }
+  const phone=normalizedPhone($('clientPhone')?.value||'');
+  if(phone && normalizedPhone(member.phone)===phone){
+    setContractReferralStatus('invalid','⚠️ El cliente no puede utilizar su propio código.');
+    return false;
+  }
+  const existingClient=phone?getLoyalty().find(c=>normalizedPhone(c.phone)===phone):null;
+  if(existingClient?.referredBy && existingClient.referredBy!==member.id){
+    setContractReferralStatus('invalid','⚠️ Este cliente ya fue registrado con otro código de referencia.');
+    return false;
+  }
+  const alreadyRewarded=getContracts().some(c=>
+    c.referralRewarded &&
+    normalizedPhone(c.clientPhone)===phone &&
+    phone
+  );
+  if(alreadyRewarded){
+    setContractReferralStatus('invalid','⚠️ Este cliente ya recibió el beneficio de referido.');
+    return false;
+  }
+  setContractReferralStatus('valid',`✅ Código válido: ${member.name}`,member);
+  return true;
+}
+
 function collectData(){
   return {
     id:$('contractNumber').textContent,
     createdAt:new Date().toISOString(),
     clientName:$('clientName').value.trim(),clientPhone:$('clientPhone').value.trim(),
+    referralCode:$('contractReferralCode')?.value.trim().toUpperCase()||'',
+    referrerId:contractReferralValidation.valid?contractReferralValidation.client?.id||'':'',
+    referrerName:contractReferralValidation.valid?contractReferralValidation.client?.name||'':'',
+    referralStatus:contractReferralValidation.valid?'valid':($('contractReferralCode')?.value.trim()?'invalid':'none'),
     eventAddress:$('eventAddress').value.trim(),mapsLink:$('mapsLink').value.trim(),
     eventDate:$('eventDate').value,eventType:$('eventType').value,startTime:$('startTime').value,
     endTime:$('endTime').value,installTime:$('installTime').value,pickupTime:$('pickupTime').value,
@@ -294,6 +348,7 @@ function renderPreview(d){
     <div class="contract-header"><h1>${COMPANY.name}</h1><div>Renta de brincolines y mobiliario para fiestas infantiles</div><div class="company-data">${COMPANY.address}<br>WhatsApp: ${COMPANY.whatsapp}<br>Facebook: ${COMPANY.facebook}</div><strong>${d.id}</strong></div>
     <div class="contract-grid">
       <div><strong>Cliente:</strong> ${escapeHtml(d.clientName)}</div><div><strong>Teléfono:</strong> ${escapeHtml(d.clientPhone)}</div>
+      ${d.referralCode?`<div class="full"><strong>Referido por:</strong> ${escapeHtml(d.referrerName||'Socio Club Brinky')} · ${escapeHtml(d.referralCode)}</div>`:''}
       <div><strong>Fecha del evento:</strong> ${dateFmt(d.eventDate)}</div><div><strong>Tipo de evento:</strong> ${escapeHtml(d.eventType)}</div>
       <div><strong>Horario:</strong> ${d.startTime} a ${d.endTime}</div><div><strong>Instalación / retiro:</strong> ${d.installTime||'—'} / ${d.pickupTime||'—'}</div>
       <div style="grid-column:1/-1"><strong>Dirección:</strong> ${escapeHtml(d.eventAddress)}</div>
@@ -348,8 +403,11 @@ $('addServiceBtn').addEventListener('click',()=>addService());
   $(id).addEventListener('change',updateServiceAvailability);
 });
 $('deposit').addEventListener('input',recalculateBalance);$('discount').addEventListener('input',recalculateTotal);
-$('saveBtn').addEventListener('click',()=>{if(!form.reportValidity())return;const d=collectData();if(!validateAvailability(d))return;saveContract(d);alert('Contrato guardado correctamente.');});
-form.addEventListener('submit',e=>{e.preventDefault();if(!form.reportValidity())return;const d=collectData();if(!validateAvailability(d))return;saveContract(d);previewIsNewContract=true;renderPreview(d)});
+$('contractReferralCode')?.addEventListener('input',validateContractReferralCode);
+$('contractReferralCode')?.addEventListener('blur',validateContractReferralCode);
+$('clientPhone')?.addEventListener('input',()=>{if($('contractReferralCode')?.value.trim())validateContractReferralCode()});
+$('saveBtn').addEventListener('click',()=>{if(!form.reportValidity())return;if(!validateContractReferralCode()){alert('Revisa el Código de Referencia antes de guardar.');$('contractReferralCode')?.focus();return}const d=collectData();if(!validateAvailability(d))return;saveContract(d);alert('Contrato guardado correctamente.');});
+form.addEventListener('submit',e=>{e.preventDefault();if(!form.reportValidity())return;if(!validateContractReferralCode()){alert('Revisa el Código de Referencia antes de generar el contrato.');$('contractReferralCode')?.focus();return}const d=collectData();if(!validateAvailability(d))return;saveContract(d);previewIsNewContract=true;renderPreview(d)});
 
 function resetForNewContract(){
   // Reinicio completo: no conservar ningún dato del contrato anterior.
@@ -358,6 +416,8 @@ function resetForNewContract(){
 
   $('clientName').value='';
   $('clientPhone').value='';
+  if($('contractReferralCode'))$('contractReferralCode').value='';
+  setContractReferralStatus('neutral','Escribe un código para validarlo automáticamente.');
   $('eventAddress').value='';
   $('mapsLink').value='';
   $('eventDate').value='';
@@ -654,7 +714,82 @@ function normalizedPhone(v=''){return String(v).replace(/\D/g,'').slice(-10)}
 function nextLoyaltyCode(){const max=getLoyalty().reduce((m,c)=>Math.max(m,Number(String(c.code||'').replace(/\D/g,''))||0),0);return 'BRK-'+String(max+1).padStart(4,'0')}
 function saveLoyaltyClient(data){const items=getLoyalty(),i=items.findIndex(x=>x.id===data.id);if(i>=0)items[i]=data;else items.unshift(data);setLoyalty(items)}
 function ensureLoyaltyClient(name,phone){const key=normalizedPhone(phone);let c=getLoyalty().find(x=>normalizedPhone(x.phone)===key&&key);if(c)return c;c={id:'LC-'+Date.now(),code:nextLoyaltyCode(),name:name||'Cliente',phone:phone||'',birthday:'',notes:'',stamps:0,totalRents:0,totalSpent:0,referrals:0,history:[],createdAt:new Date().toISOString()};saveLoyaltyClient(c);return c}
-window.completeContractAndStamp=id=>{const contracts=getContracts(),i=contracts.findIndex(x=>x.id===id);if(i<0)return;if(!confirm('¿Marcar el servicio como realizado y agregar 1 Estrella Brinky al cliente?'))return;const d=contracts[i],c=ensureLoyaltyClient(d.clientName,d.clientPhone);const clients=getLoyalty(),ci=clients.findIndex(x=>x.id===c.id);clients[ci].stamps=Number(clients[ci].stamps||0)+1;clients[ci].totalRents=Number(clients[ci].totalRents||0)+1;clients[ci].totalSpent=Number(clients[ci].totalSpent||0)+Number(d.total||0);clients[ci].history.unshift({date:new Date().toISOString(),type:'stamp',text:`Estrella Brinky por contrato ${d.id}`,contractId:d.id});localStorage.setItem(LOYALTY_KEY,JSON.stringify(clients));queueLoyaltyMessage(clients[ci],rewardStatus(clients[ci])?'reward':'update',`contract-${d.id}`);contracts[i]={...d,completed:true,completedAt:new Date().toISOString(),loyaltyClientId:c.id};setContracts(contracts);renderLoyalty();alert('Servicio realizado. Se agregó 1 Estrella Brinky a la tarjeta del cliente.')}
+window.completeContractAndStamp=id=>{
+  const contracts=getContracts(),i=contracts.findIndex(x=>x.id===id);
+  if(i<0)return;
+  if(contracts[i].completed){alert('Este contrato ya fue marcado como realizado.');return}
+  if(!confirm('¿Marcar el servicio como realizado y agregar las Estrellas Brinky correspondientes?'))return;
+
+  const d=contracts[i];
+  const customer=ensureLoyaltyClient(d.clientName,d.clientPhone);
+  const clients=getLoyalty();
+  const ci=clients.findIndex(x=>x.id===customer.id);
+  if(ci<0)return;
+
+  // Estrella normal por la renta realizada.
+  clients[ci].stamps=Number(clients[ci].stamps||0)+1;
+  clients[ci].totalRents=Number(clients[ci].totalRents||0)+1;
+  clients[ci].totalSpent=Number(clients[ci].totalSpent||0)+Number(d.total||0);
+  clients[ci].history=clients[ci].history||[];
+  clients[ci].history.unshift({
+    date:new Date().toISOString(),
+    type:'stamp',
+    text:`Estrella Brinky por contrato ${d.id}`,
+    contractId:d.id
+  });
+
+  let referralRewarded=false;
+  let referrerName='';
+  if(d.referrerId && d.referralCode && !d.referralRewarded){
+    const ri=clients.findIndex(x=>x.id===d.referrerId);
+    const selfReferral=ri===ci || (ri>=0 && normalizedPhone(clients[ri].phone)===normalizedPhone(d.clientPhone));
+    const customerAlreadyReferred=Boolean(clients[ci].referredBy && clients[ci].referredBy!==d.referrerId);
+    if(ri>=0 && !selfReferral && !customerAlreadyReferred){
+      clients[ri].stamps=Number(clients[ri].stamps||0)+1;
+      clients[ri].referrals=Number(clients[ri].referrals||0)+1;
+      clients[ri].history=clients[ri].history||[];
+      clients[ri].history.unshift({
+        date:new Date().toISOString(),
+        type:'referral',
+        text:`Estrella Brinky por recomendar a ${d.clientName}`,
+        contractId:d.id
+      });
+
+      clients[ci].stamps=Number(clients[ci].stamps||0)+1;
+      clients[ci].referredBy=d.referrerId;
+      clients[ci].history.unshift({
+        date:new Date().toISOString(),
+        type:'referral',
+        text:`Estrella Brinky por usar el código ${d.referralCode}`,
+        contractId:d.id
+      });
+
+      referralRewarded=true;
+      referrerName=clients[ri].name;
+      queueLoyaltyMessage(clients[ri],'referral',`referrer-${d.id}`);
+    }
+  }
+
+  localStorage.setItem(LOYALTY_KEY,JSON.stringify(clients));
+  queueLoyaltyMessage(clients[ci],rewardStatus(clients[ci])?'reward':'update',`contract-${d.id}`);
+  contracts[i]={
+    ...d,
+    completed:true,
+    completedAt:new Date().toISOString(),
+    loyaltyClientId:customer.id,
+    referralRewarded,
+    referralRewardedAt:referralRewarded?new Date().toISOString():null
+  };
+  setContracts(contracts);
+  renderLoyalty();
+  renderMessages();
+
+  alert(
+    referralRewarded
+      ? `Servicio realizado. El cliente recibió 1 estrella por la renta y 1 por referencia. ${referrerName} recibió 1 estrella por recomendarlo.`
+      : 'Servicio realizado. Se agregó 1 Estrella Brinky a la tarjeta del cliente.'
+  );
+}
 function rewardStatus(c){const s=getLoyaltySettings(),st=Number(c.stamps||0);if(st>=s.r2)return {name:s.n2,target:s.r2};if(st>=s.r1)return {name:s.n1,target:s.r1};return null}
 
 function loyaltyTier(stamps){const n=Number(stamps||0);if(n>=16)return {name:'DIAMANTE',icon:'💎'};if(n>=8)return {name:'ORO',icon:'🥇'};if(n>=4)return {name:'PLATA',icon:'🥈'};return {name:'BRONCE',icon:'🥉'}}
