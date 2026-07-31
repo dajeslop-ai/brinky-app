@@ -15,7 +15,7 @@
 </header>
 <main>
 <section id="homeView" class="view active">
-  <div class="welcome card"><div><span class="badge">Versión 6.3 · Captura rápida</span><h2>Bienvenido</h2><p>Administra tus contratos desde el smartphone.</p></div><img src="icons/icon-192.png?v=37" alt="Brinky"></div>
+  <div class="welcome card"><div><span class="badge">Versión 6.4 · Menú y saldos</span><h2>Bienvenido</h2><p>Administra tus contratos desde el smartphone.</p></div><img src="icons/icon-192.png?v=37" alt="Brinky"></div>
   <div class="stats">
     <article class="stat card"><b id="statContracts">0</b><span>Contratos guardados</span></article>
     <article class="stat card"><b id="statUpcoming">0</b><span>Próximos eventos</span></article>
@@ -23,13 +23,13 @@
     <article class="stat card"><b id="statMembers">0</b><span>Miembros Club Brinky</span></article>
     <article class="stat card"><b id="statMessages">0</b><span>Mensajes pendientes</span></article>
   </div>
-  <section class="card"><h3>Acciones rápidas</h3><div class="quick-grid">
-    <button class="quick" data-go="new"><span>📄</span><b>Nuevo contrato</b><small>Crear en minutos</small></button>
+  <section class="card"><h3>Menú principal</h3><div class="quick-grid">
     <button class="quick" data-go="quotes"><span>🧾</span><b>Nueva cotización</b><small>Enviar antes de apartar</small></button>
+    <button class="quick" data-go="new"><span>📄</span><b>Nuevo contrato</b><small>Crear en minutos</small></button>
     <button class="quick" data-go="contracts"><span>🗂️</span><b>Contratos</b><small>Ver guardados</small></button>
-    <button class="quick" data-go="reports"><span>📊</span><b>Reportes</b><small>Contratos y ganancias</small></button>
     <button class="quick" data-go="loyalty"><span>⭐</span><b>Club Brinky</b><small>Clientes y recompensas</small></button>
     <button class="quick" data-go="messages"><span>💬</span><b>Centro de mensajes</b><small>Bienvenidas y actualizaciones</small></button>
+    <button class="quick" data-go="reports"><span>📊</span><b>Reportes</b><small>Contratos y ganancias</small></button>
   </div></section>
   <section class="card install-card" id="installCard"><div><h3>Instala la aplicación</h3><p>Úsala en pantalla completa y sin conexión.</p></div><button id="installCardBtn" class="btn btn-primary">Instalar app</button></section>
   <section class="card"><div class="section-head"><div><h3>Próximos eventos</h3><p>Rentas registradas con fecha futura.</p></div></div><div id="upcomingList"></div></section>
@@ -142,7 +142,7 @@
   </section>
 </section>
 
-<nav class="bottom-nav"><button data-go="home" class="active">⌂<span>Inicio</span></button><button data-go="new">＋<span>Contrato</span></button><button data-go="quotes">🧾<span>Cotizar</span></button><button data-go="contracts">▤<span>Contratos</span></button><button data-go="reports">▥<span>Reportes</span></button><button data-go="loyalty">⭐<span>Club</span></button><button data-go="messages">💬<span>Mensajes</span><i id="navMessageBadge" class="nav-badge hidden">0</i></button></nav>
+<nav class="bottom-nav"><button data-go="home" class="active">⌂<span>Inicio</span></button><button data-go="quotes">🧾<span>Cotizar</span></button><button data-go="new">＋<span>Nuevo</span></button><button data-go="contracts">▤<span>Contratos</span></button><button data-go="loyalty">⭐<span>Club</span></button><button data-go="messages">💬<span>Mensajes</span><i id="navMessageBadge" class="nav-badge hidden">0</i></button><button data-go="reports">▥<span>Reportes</span></button></nav>
 
 <template id="serviceTemplate"><div class="service-row"><label class="service-main">Servicio<select class="service-name" required><option value="" selected disabled>SELECCIONA UN SERVICIO</option><option>BRINCOLÍN CASTILLO ROSA 4 X 5 X 2.5</option><option>CASTILLO AZUL 4 X 5 X 2.5</option><option>ESCALADORA 3 X 6 X 3</option><option>TOBOGÁN ACUÁTICO 3 X 7 X 2.5</option><option>PISCINA INFLABLE 3 X 3</option><option>MOBILIARIO PASTEL INFANTIL (1 MESA / 10 SILLITAS)</option><option>FUTBOLITO DE MESA 3 PELOTAS</option><option>PAQ. 3 CABALLETES DOBLES + 6 SILLITAS</option><option>PAQ. 6 CABALLETES DOBLES + 12 SILLITAS</option><option>MAQUINITA PELUCHERA</option><option>PREMIOS 25</option><option>PREMIOS 30</option><option>PREMIOS 40</option><option>PREMIOS 50</option><option>OTRO</option></select><input class="service-custom hidden" placeholder="Escribe el servicio manualmente"><small class="service-status hidden"></small></label><label>Cantidad<input class="service-qty" type="number" value="1" min="1"></label><label>Tiempo<select class="service-duration"><option value="1">1 hora</option><option value="2">2 horas</option><option value="3">3 horas</option><option value="4" selected>4 horas</option><option value="5">5 horas</option><option value="6">6 horas</option><option value="8">8 horas</option><option value="12">Todo el día</option><option value="custom">Personalizado</option></select></label><label>Precio<input class="service-price" type="number" min="0" step=".01" value="0"></label><button type="button" class="remove-service" aria-label="Eliminar">×</button></div></template>
 <div id="quotePreviewModal" class="modal hidden"><div class="modal-content"><div class="modal-actions no-print"><button id="closeQuotePreview" class="btn btn-light">Cerrar</button><button id="convertQuoteBtn" class="btn btn-primary">Convertir en contrato</button><button id="shareQuote" class="btn btn-whatsapp">Enviar por WhatsApp</button><button id="downloadQuotePdf" class="btn btn-pink">Guardar PDF</button><button id="printQuote" class="btn btn-blue">Imprimir</button></div><article id="quotePreview" class="contract"></article></div></div>

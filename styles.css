@@ -76,3 +76,23 @@ input:focus,select:focus,textarea:focus{
   outline:3px solid rgba(41,171,82,.18);
   border-color:#29ab52;
 }
+
+
+/* Navegación inferior v6.4 */
+.bottom-nav{
+  overflow-x:auto;
+  overflow-y:hidden;
+  justify-content:flex-start;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.bottom-nav::-webkit-scrollbar{display:none}
+.bottom-nav button{
+  flex:0 0 calc(100% / 6);
+  min-width:64px;
+  padding-left:3px;
+  padding-right:3px;
+}
+@media (min-width:760px){
+  .bottom-nav button{flex:1 1 0}
+}

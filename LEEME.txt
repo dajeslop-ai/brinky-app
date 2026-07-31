@@ -1,43 +1,29 @@
-BRINKY SUITE PRO v6.3 — CAPTURA RÁPIDA
+BRINKY SUITE PRO v6.4 — MENÚ Y SALDOS
 
-CAMBIOS PRINCIPALES
+CAMBIOS REALIZADOS
 
-1. REGLA DE REFERIDOS CORREGIDA
-- El cliente que utiliza un código válido recibe UNA sola estrella total por su primera renta.
-- El socio que lo recomendó recibe UNA estrella.
-- El cliente ya no recibe dos estrellas por la misma renta.
-- Las estrellas solo se aplican cuando el contrato se marca como REALIZADO.
-- El Código de Referencia continúa exactamente como se pidió:
-  • escritura manual;
-  • validación automática;
-  • sin listas;
-  • sin sugerencias;
-  • sin autocompletado.
+MENÚ PRINCIPAL
+- “Acciones rápidas” ahora se llama “Menú principal”.
+- Orden:
+  1. Nueva cotización
+  2. Nuevo contrato
+  3. Contratos
+  4. Club Brinky
+  5. Centro de mensajes
+  6. Reportes
 
-2. CAPTURA CON TECLADO
-- ENTER avanza al siguiente campo en contratos y cotizaciones.
-- SHIFT + ENTER regresa al campo anterior.
-- El contenido del siguiente campo se selecciona automáticamente cuando es posible.
-- En campos de observaciones/notas, ENTER conserva el salto de línea.
-- Al terminar el último campo, ENTER genera la vista previa.
+MENÚ INFERIOR
+- Orden:
+  Inicio / Cotizar / Nuevo / Contratos / Club / Mensajes / Reportes
+- Reportes queda al final.
+- Mensajes queda en penúltimo lugar.
+- En pantallas angostas se permite desplazamiento horizontal.
 
-3. CLIENTES EXISTENTES
-- Al terminar de escribir un teléfono conocido, la aplicación pregunta si deseas recuperar sus datos.
-- En contratos puede recuperar nombre, dirección y enlace de Maps disponibles.
-- En cotizaciones puede recuperar nombre y zona/dirección.
-- No modifica ni sugiere Códigos de Referencia.
+REPORTES
+- Un contrato marcado como REALIZADO se considera liquidado.
+- Su saldo pendiente aparece como $0.
+- El importe total pasa a Cobrado.
+- La Ganancia real se recalcula con el cobro total menos gastos.
+- Al marcarlo como realizado, el contrato guarda saldo 0 y cobro total.
 
-4. PREFERENCIAS RECORDADAS
-- Recuerda el último servicio principal utilizado.
-- Recuerda la última duración.
-- Recuerda el último método de pago del contrato.
-
-5. ATAJOS
-- F2: Nuevo contrato.
-- F3: Nueva cotización.
-- F5: Guardar la pantalla actual.
-- F6: Generar vista previa.
-- F7: Compartir por WhatsApp cuando la vista previa está abierta.
-- ESC: Cerrar la vista previa.
-
-La aplicación conserva todas las funciones de las versiones anteriores.
+Se conservan las funciones de captura rápida, Club Brinky y referencias de la v6.3.

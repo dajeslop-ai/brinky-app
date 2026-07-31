@@ -341,15 +341,15 @@ function renderReports(){
   const contracts=getContracts().filter(c=>monthKey(c.eventDate)===key);
   const expenses=getExpenses().filter(e=>monthKey(e.date)===key);
   const sales=contracts.reduce((s,c)=>s+Number(c.total||0),0);
-  const pending=contracts.reduce((s,c)=>s+Number(c.balance||0),0);
-  const collected=contracts.reduce((s,c)=>s+Math.max(0,Number(c.total||0)-Number(c.balance||0)),0);
+  const pending=contracts.reduce((s,c)=>s+(c.completed?0:Number(c.balance||0)),0);
+  const collected=contracts.reduce((s,c)=>s+(c.completed?Number(c.total||0):Math.max(0,Number(c.total||0)-Number(c.balance||0))),0);
   const expenseTotal=expenses.reduce((s,e)=>s+Number(e.amount||0),0);
   const profit=collected-expenseTotal;
   $('reportContractsCount').textContent=contracts.length;
   $('reportSales').textContent=money(sales);$('reportCollected').textContent=money(collected);
   $('reportPending').textContent=money(pending);$('reportExpenses').textContent=money(expenseTotal);
   $('reportProfit').textContent=money(profit);$('reportProfit').classList.toggle('negative',profit<0);
-  $('monthlyContracts').innerHTML=contracts.length?contracts.sort((a,b)=>(a.eventDate||'').localeCompare(b.eventDate||'')).map(c=>`<div class="report-row"><div><strong>${escapeHtml(c.clientName||'Sin nombre')}</strong><div class="saved-meta">${c.id} · ${dateFmt(c.eventDate)} · ${escapeHtml((c.services&&c.services[0]?.name)||'Servicio')}</div></div><div class="report-money"><b>${money(c.total)}</b><small>Pendiente: ${money(c.balance)}</small></div></div>`).join(''):'<div class="empty">No hay contratos en este mes.</div>';
+  $('monthlyContracts').innerHTML=contracts.length?contracts.sort((a,b)=>(a.eventDate||'').localeCompare(b.eventDate||'')).map(c=>`<div class="report-row"><div><strong>${escapeHtml(c.clientName||'Sin nombre')}</strong><div class="saved-meta">${c.id} · ${dateFmt(c.eventDate)} · ${escapeHtml((c.services&&c.services[0]?.name)||'Servicio')}</div></div><div class="report-money"><b>${money(c.total)}</b><small>Pendiente: ${money(c.completed?0:c.balance)}</small></div></div>`).join(''):'<div class="empty">No hay contratos en este mes.</div>';
   $('expensesList').innerHTML=expenses.length?expenses.sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(e=>`<div class="report-row"><div><strong>${escapeHtml(e.category)}</strong><div class="saved-meta">${dateFmt(e.date)} · ${escapeHtml(e.description||'Sin descripción')}</div></div><div class="expense-actions"><b>${money(e.amount)}</b><button class="btn btn-danger-light" onclick="deleteExpense('${e.id}')">Eliminar</button></div></div>`).join(''):'<div class="empty">No hay gastos registrados en este mes.</div>';
   const counts={};contracts.forEach(c=>(c.services||[]).forEach(s=>{const n=s.name||'Sin nombre';counts[n]=(counts[n]||0)+Number(s.qty||1)}));
   const top=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,8);
@@ -965,6 +965,8 @@ window.completeContractAndStamp=id=>{
     ...d,
     completed:true,
     completedAt:new Date().toISOString(),
+    deposit:Number(d.total||0),
+    balance:0,
     loyaltyClientId:customer.id,
     referralRewarded,
     referralRewardedAt:referralRewarded?new Date().toISOString():null
