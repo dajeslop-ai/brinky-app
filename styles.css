@@ -57,3 +57,22 @@
   color:#b42318;
   border:1px solid #ffc2c2;
 }
+
+
+/* Productividad y recuperación de clientes · v6.3 */
+.client-lookup{
+  display:block;
+  margin-top:7px;
+  padding:7px 9px;
+  border-radius:9px;
+  font-size:.82rem;
+  font-weight:800;
+  background:#e9fff0;
+  color:#087a38;
+  border:1px solid #a9e8bd;
+}
+.client-lookup.hidden{display:none}
+input:focus,select:focus,textarea:focus{
+  outline:3px solid rgba(41,171,82,.18);
+  border-color:#29ab52;
+}

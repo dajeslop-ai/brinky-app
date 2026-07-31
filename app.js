@@ -51,6 +51,12 @@ function addService(data={}){
   row.querySelector('.service-price').value = data.price || 0;
   row.querySelector('.remove-service').addEventListener('click',()=>{row.remove();recalculateTotal();});
   row.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',recalculateTotal));
+  const prefs=getCapturePrefs();
+  if(!data.name&&prefs.contractService){
+    const select=row.querySelector('.service-name');
+    if([...select.options].some(o=>o.value===prefs.contractService))select.value=prefs.contractService;
+  }
+  if(!data.duration&&prefs.contractDuration)row.querySelector('.service-duration').value=prefs.contractDuration;
   servicesList.appendChild(row);
   updateServiceAvailability();
 }
@@ -126,6 +132,171 @@ function validateContractReferralCode(){
   }
   setContractReferralStatus('valid',`✅ Código válido: ${member.name}`,member);
   return true;
+}
+
+
+const CAPTURE_PREFS_KEY='brinky_capture_preferences_v1';
+let lastClientLookup={contract:'',quote:''};
+
+function getCapturePrefs(){
+  try{return JSON.parse(localStorage.getItem(CAPTURE_PREFS_KEY)||'{}')}catch{return {}}
+}
+function saveCapturePrefs(patch){
+  const next={...getCapturePrefs(),...patch};
+  localStorage.setItem(CAPTURE_PREFS_KEY,JSON.stringify(next));
+  return next;
+}
+function focusAndSelect(el){
+  if(!el||el.disabled||el.hidden)return;
+  el.focus({preventScroll:false});
+  if(typeof el.select==='function' && !['select-one','select-multiple','date','time'].includes(el.type)){
+    try{el.select()}catch{}
+  }
+}
+function navigableFields(form){
+  if(!form)return[];
+  return [...form.querySelectorAll('input,select,textarea,button')]
+    .filter(el=>{
+      if(el.disabled||el.hidden||el.type==='hidden'||el.tabIndex<0)return false;
+      if(el.closest('.hidden'))return false;
+      if(el.matches('.remove-service'))return false;
+      const style=getComputedStyle(el);
+      return style.display!=='none'&&style.visibility!=='hidden';
+    });
+}
+function installEnterNavigation(form){
+  if(!form||form.dataset.enterNavigation==='1')return;
+  form.dataset.enterNavigation='1';
+  form.addEventListener('keydown',e=>{
+    if(e.key!=='Enter'||e.ctrlKey||e.altKey||e.metaKey)return;
+    const target=e.target;
+    if(target.tagName==='TEXTAREA')return; // Enter conserva el salto de línea en observaciones/notas.
+    if(target.tagName==='BUTTON')return;
+    e.preventDefault();
+    const fields=navigableFields(form);
+    const index=fields.indexOf(target);
+    if(index<0)return;
+    const direction=e.shiftKey?-1:1;
+    let nextIndex=index+direction;
+    while(nextIndex>=0&&nextIndex<fields.length){
+      const next=fields[nextIndex];
+      if(next&&next.offsetParent!==null){focusAndSelect(next);return}
+      nextIndex+=direction;
+    }
+    if(!e.shiftKey){
+      const submit=form.querySelector('button[type="submit"],input[type="submit"]');
+      if(submit)submit.click();
+    }
+  });
+}
+function latestClientDataByPhone(phone){
+  const key=normalizedPhone(phone);
+  if(!key)return null;
+  const loyalty=getLoyalty().find(x=>normalizedPhone(x.phone)===key);
+  const contracts=getContracts()
+    .filter(x=>normalizedPhone(x.clientPhone)===key)
+    .sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+  const latest=contracts[0];
+  if(!loyalty&&!latest)return null;
+  return {
+    name:loyalty?.name||latest?.clientName||'',
+    phone:loyalty?.phone||latest?.clientPhone||phone,
+    address:latest?.eventAddress||'',
+    mapsLink:latest?.mapsLink||'',
+    loyalty
+  };
+}
+function showLookupStatus(id,message,kind='found'){
+  const el=$(id);
+  if(!el)return;
+  el.textContent=message;
+  el.className=`client-lookup ${kind}`;
+}
+function hideLookupStatus(id){
+  const el=$(id);
+  if(!el)return;
+  el.textContent='';
+  el.className='client-lookup hidden';
+}
+function lookupContractClient(){
+  const phone=$('clientPhone')?.value||'';
+  const key=normalizedPhone(phone);
+  if(key.length<10){hideLookupStatus('contractClientLookup');return}
+  if(lastClientLookup.contract===key)return;
+  const found=latestClientDataByPhone(phone);
+  if(!found){hideLookupStatus('contractClientLookup');return}
+  lastClientLookup.contract=key;
+  showLookupStatus('contractClientLookup',`✓ Cliente encontrado: ${found.name}`);
+  const currentName=$('clientName')?.value.trim()||'';
+  const shouldAsk=!currentName||currentName.toLowerCase()!==found.name.toLowerCase();
+  if(shouldAsk&&confirm(`Cliente encontrado: ${found.name}\n\n¿Deseas cargar sus datos anteriores?`)){
+    $('clientName').value=found.name||'';
+    if(found.address)$('eventAddress').value=found.address;
+    if(found.mapsLink)$('mapsLink').value=found.mapsLink;
+    validateContractReferralCode();
+  }
+}
+function lookupQuoteClient(){
+  const phone=$('quoteClientPhone')?.value||'';
+  const key=normalizedPhone(phone);
+  if(key.length<10){hideLookupStatus('quoteClientLookup');return}
+  if(lastClientLookup.quote===key)return;
+  const found=latestClientDataByPhone(phone);
+  if(!found){hideLookupStatus('quoteClientLookup');return}
+  lastClientLookup.quote=key;
+  showLookupStatus('quoteClientLookup',`✓ Cliente encontrado: ${found.name}`);
+  const currentName=$('quoteClientName')?.value.trim()||'';
+  const shouldAsk=!currentName||currentName.toLowerCase()!==found.name.toLowerCase();
+  if(shouldAsk&&confirm(`Cliente encontrado: ${found.name}\n\n¿Deseas cargar sus datos anteriores en la cotización?`)){
+    $('quoteClientName').value=found.name||'';
+    if(found.address)$('quoteAddress').value=found.address;
+  }
+}
+function rememberContractPreferences(){
+  const first=servicesList?.querySelector('.service-row');
+  saveCapturePrefs({
+    contractService:first?.querySelector('.service-name')?.value||'',
+    contractDuration:first?.querySelector('.service-duration')?.value||'4',
+    paymentMethod:$('paymentMethod')?.value||'Efectivo'
+  });
+}
+function rememberQuotePreferences(){
+  const first=quoteServicesList?.querySelector('.service-row');
+  saveCapturePrefs({
+    quoteService:first?.querySelector('.service-name')?.value||'',
+    quoteDuration:first?.querySelector('.service-duration')?.value||'4'
+  });
+}
+function openViewAndFocus(view,fieldId){
+  showView(view);
+  setTimeout(()=>focusAndSelect($(fieldId)),50);
+}
+function installProductivityShortcuts(){
+  document.addEventListener('keydown',e=>{
+    if(e.altKey||e.ctrlKey||e.metaKey)return;
+    const key=e.key.toUpperCase();
+    if(key==='F2'){e.preventDefault();openViewAndFocus('new','clientName')}
+    else if(key==='F3'){e.preventDefault();openViewAndFocus('quotes','quoteClientName')}
+    else if(key==='F5'){
+      e.preventDefault();
+      if(!$('newView')?.classList.contains('hidden'))$('saveBtn')?.click();
+      else if(!$('quotesView')?.classList.contains('hidden'))$('saveQuoteBtn')?.click();
+    }
+    else if(key==='F6'){
+      e.preventDefault();
+      if(!$('newView')?.classList.contains('hidden'))form?.requestSubmit();
+      else if(!$('quotesView')?.classList.contains('hidden'))quoteForm?.requestSubmit();
+    }
+    else if(key==='F7'){
+      e.preventDefault();
+      if(!$('previewModal')?.classList.contains('hidden'))$('shareContract')?.click();
+      else if(!$('quotePreviewModal')?.classList.contains('hidden'))$('shareQuote')?.click();
+    }
+    else if(e.key==='Escape'){
+      if(!$('previewModal')?.classList.contains('hidden'))$('closePreview')?.click();
+      else if(!$('quotePreviewModal')?.classList.contains('hidden'))$('closeQuotePreview')?.click();
+    }
+  });
 }
 
 function collectData(){
@@ -403,11 +574,17 @@ $('addServiceBtn').addEventListener('click',()=>addService());
   $(id).addEventListener('change',updateServiceAvailability);
 });
 $('deposit').addEventListener('input',recalculateBalance);$('discount').addEventListener('input',recalculateTotal);
+$('clientPhone')?.addEventListener('blur',lookupContractClient);
+$('clientPhone')?.addEventListener('change',lookupContractClient);
+$('paymentMethod')?.addEventListener('change',rememberContractPreferences);
+servicesList?.addEventListener('change',e=>{
+  if(e.target.matches('.service-name,.service-duration'))rememberContractPreferences();
+});
 $('contractReferralCode')?.addEventListener('input',validateContractReferralCode);
 $('contractReferralCode')?.addEventListener('blur',validateContractReferralCode);
 $('clientPhone')?.addEventListener('input',()=>{if($('contractReferralCode')?.value.trim())validateContractReferralCode()});
-$('saveBtn').addEventListener('click',()=>{if(!form.reportValidity())return;if(!validateContractReferralCode()){alert('Revisa el Código de Referencia antes de guardar.');$('contractReferralCode')?.focus();return}const d=collectData();if(!validateAvailability(d))return;saveContract(d);alert('Contrato guardado correctamente.');});
-form.addEventListener('submit',e=>{e.preventDefault();if(!form.reportValidity())return;if(!validateContractReferralCode()){alert('Revisa el Código de Referencia antes de generar el contrato.');$('contractReferralCode')?.focus();return}const d=collectData();if(!validateAvailability(d))return;saveContract(d);previewIsNewContract=true;renderPreview(d)});
+$('saveBtn').addEventListener('click',()=>{rememberContractPreferences();if(!form.reportValidity())return;if(!validateContractReferralCode()){alert('Revisa el Código de Referencia antes de guardar.');$('contractReferralCode')?.focus();return}const d=collectData();if(!validateAvailability(d))return;saveContract(d);alert('Contrato guardado correctamente.');});
+form.addEventListener('submit',e=>{e.preventDefault();rememberContractPreferences();if(!form.reportValidity())return;if(!validateContractReferralCode()){alert('Revisa el Código de Referencia antes de generar el contrato.');$('contractReferralCode')?.focus();return}const d=collectData();if(!validateAvailability(d))return;saveContract(d);previewIsNewContract=true;renderPreview(d)});
 
 function resetForNewContract(){
   // Reinicio completo: no conservar ningún dato del contrato anterior.
@@ -415,6 +592,7 @@ function resetForNewContract(){
   servicesList.innerHTML='';
 
   $('clientName').value='';
+  lastClientLookup.contract='';hideLookupStatus('contractClientLookup');
   $('clientPhone').value='';
   if($('contractReferralCode'))$('contractReferralCode').value='';
   setContractReferralStatus('neutral','Escribe un código para validarlo automáticamente.');
@@ -642,6 +820,12 @@ function addQuoteService(data={}){
   row.querySelector('.service-price').value=data.price||0;
   row.querySelector('.remove-service').addEventListener('click',()=>{row.remove();recalculateQuote()});
   row.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',recalculateQuote));
+  const prefs=getCapturePrefs();
+  if(!data.name&&prefs.quoteService){
+    const select=row.querySelector('.service-name');
+    if([...select.options].some(o=>o.value===prefs.quoteService))select.value=prefs.quoteService;
+  }
+  if(!data.duration&&prefs.quoteDuration)row.querySelector('.service-duration').value=prefs.quoteDuration;
   quoteServicesList.appendChild(row);recalculateQuote();
 }
 function getQuoteServices(){return [...quoteServicesList.querySelectorAll('.service-row')].map(row=>({
@@ -660,7 +844,7 @@ function collectQuote(){
   return {id:$('quoteNumber').textContent,createdAt,clientName:$('quoteClientName').value.trim(),clientPhone:$('quoteClientPhone').value.trim(),eventAddress:$('quoteAddress').value.trim(),eventDate:$('quoteEventDate').value,validityDays:validity,expiresAt:quoteExpiry(createdAt,validity),status:$('quoteStatus').value,services:getQuoteServices(),subtotal:Number($('quoteSubtotal').value||0),discount:Number($('quoteDiscount').value||0),total:Number($('quoteTotal').value||0),notes:$('quoteNotes').value.trim()}
 }
 function saveQuote(q){const items=getQuotes(),i=items.findIndex(x=>x.id===q.id);if(i>=0)items[i]=q;else items.unshift(q);setQuotes(items)}
-function resetQuoteForm(){quoteForm.reset();quoteServicesList.innerHTML='';$('quoteNumber').textContent=quoteId();$('quoteValidity').value='7';$('quoteStatus').value='Pendiente';$('quoteDiscount').value='0';addQuoteService({name:'',qty:1,duration:'4',price:0});recalculateQuote()}
+function resetQuoteForm(){lastClientLookup.quote='';hideLookupStatus('quoteClientLookup');quoteForm.reset();quoteServicesList.innerHTML='';$('quoteNumber').textContent=quoteId();$('quoteValidity').value='7';$('quoteStatus').value='Pendiente';$('quoteDiscount').value='0';addQuoteService({name:'',qty:1,duration:'4',price:0});recalculateQuote()}
 function renderQuotes(){
   if(!$('savedQuotes'))return;const q=($('searchQuotes')?.value||'').toLowerCase().trim();
   const items=getQuotes().filter(x=>!q||[x.id,x.clientName,x.clientPhone].some(v=>String(v||'').toLowerCase().includes(q)));
@@ -696,8 +880,13 @@ async function downloadQuote(){if(!currentQuote)return;const file=await createQu
 function initQuotes(){
   $('quoteNumber').textContent=quoteId();addQuoteService({name:'',qty:1,duration:'4',price:0});
   $('addQuoteServiceBtn').addEventListener('click',()=>addQuoteService());$('quoteDiscount').addEventListener('input',recalculateQuote);
-  $('saveQuoteBtn').addEventListener('click',()=>{if(!quoteForm.reportValidity())return;const q=collectQuote();saveQuote(q);alert('Cotización guardada correctamente.');resetQuoteForm()});
-  quoteForm.addEventListener('submit',e=>{e.preventDefault();if(!quoteForm.reportValidity())return;const q=collectQuote();saveQuote(q);renderQuotePreview(q)});
+  $('quoteClientPhone')?.addEventListener('blur',lookupQuoteClient);
+  $('quoteClientPhone')?.addEventListener('change',lookupQuoteClient);
+  quoteServicesList?.addEventListener('change',e=>{
+    if(e.target.matches('.service-name,.service-duration'))rememberQuotePreferences();
+  });
+  $('saveQuoteBtn').addEventListener('click',()=>{rememberQuotePreferences();if(!quoteForm.reportValidity())return;const q=collectQuote();saveQuote(q);alert('Cotización guardada correctamente.');resetQuoteForm()});
+  quoteForm.addEventListener('submit',e=>{e.preventDefault();rememberQuotePreferences();if(!quoteForm.reportValidity())return;const q=collectQuote();saveQuote(q);renderQuotePreview(q)});
   $('searchQuotes').addEventListener('input',renderQuotes);$('closeQuotePreview').addEventListener('click',()=>{$('quotePreviewModal').classList.add('hidden');resetQuoteForm()});
   $('convertQuoteBtn').addEventListener('click',()=>convertQuoteToContract(currentQuote));$('shareQuote').addEventListener('click',()=>shareQuoteFile().catch(e=>e?.name!=='AbortError'&&alert('No se pudo compartir la cotización.')));$('downloadQuotePdf').addEventListener('click',()=>downloadQuote().catch(()=>alert('No se pudo guardar el PDF.')));$('printQuote').addEventListener('click',()=>{document.body.classList.add('printing-quote');window.print();setTimeout(()=>document.body.classList.remove('printing-quote'),500)});renderQuotes();recalculateQuote()
 }
@@ -726,25 +915,23 @@ window.completeContractAndStamp=id=>{
   const ci=clients.findIndex(x=>x.id===customer.id);
   if(ci<0)return;
 
-  // Estrella normal por la renta realizada.
+  // El cliente recibe UNA sola estrella por esta renta, haya usado o no referencia.
   clients[ci].stamps=Number(clients[ci].stamps||0)+1;
   clients[ci].totalRents=Number(clients[ci].totalRents||0)+1;
   clients[ci].totalSpent=Number(clients[ci].totalSpent||0)+Number(d.total||0);
   clients[ci].history=clients[ci].history||[];
-  clients[ci].history.unshift({
-    date:new Date().toISOString(),
-    type:'stamp',
-    text:`Estrella Brinky por contrato ${d.id}`,
-    contractId:d.id
-  });
 
   let referralRewarded=false;
   let referrerName='';
+  let customerHistoryText=`Estrella Brinky por contrato ${d.id}`;
+
   if(d.referrerId && d.referralCode && !d.referralRewarded){
     const ri=clients.findIndex(x=>x.id===d.referrerId);
     const selfReferral=ri===ci || (ri>=0 && normalizedPhone(clients[ri].phone)===normalizedPhone(d.clientPhone));
     const customerAlreadyReferred=Boolean(clients[ci].referredBy && clients[ci].referredBy!==d.referrerId);
+
     if(ri>=0 && !selfReferral && !customerAlreadyReferred){
+      // Quien recomendó recibe UNA estrella.
       clients[ri].stamps=Number(clients[ri].stamps||0)+1;
       clients[ri].referrals=Number(clients[ri].referrals||0)+1;
       clients[ri].history=clients[ri].history||[];
@@ -755,23 +942,25 @@ window.completeContractAndStamp=id=>{
         contractId:d.id
       });
 
-      clients[ci].stamps=Number(clients[ci].stamps||0)+1;
+      // El cliente referido conserva solamente la estrella de esta renta.
       clients[ci].referredBy=d.referrerId;
-      clients[ci].history.unshift({
-        date:new Date().toISOString(),
-        type:'referral',
-        text:`Estrella Brinky por usar el código ${d.referralCode}`,
-        contractId:d.id
-      });
-
+      customerHistoryText=`Primera Estrella Brinky usando el código ${d.referralCode}`;
       referralRewarded=true;
       referrerName=clients[ri].name;
       queueLoyaltyMessage(clients[ri],'referral',`referrer-${d.id}`);
     }
   }
 
+  clients[ci].history.unshift({
+    date:new Date().toISOString(),
+    type:referralRewarded?'referral':'stamp',
+    text:customerHistoryText,
+    contractId:d.id
+  });
+
   localStorage.setItem(LOYALTY_KEY,JSON.stringify(clients));
   queueLoyaltyMessage(clients[ci],rewardStatus(clients[ci])?'reward':'update',`contract-${d.id}`);
+
   contracts[i]={
     ...d,
     completed:true,
@@ -786,7 +975,7 @@ window.completeContractAndStamp=id=>{
 
   alert(
     referralRewarded
-      ? `Servicio realizado. El cliente recibió 1 estrella por la renta y 1 por referencia. ${referrerName} recibió 1 estrella por recomendarlo.`
+      ? `Servicio realizado. ${d.clientName} recibió 1 estrella y ${referrerName} recibió 1 estrella por recomendarlo.`
       : 'Servicio realizado. Se agregó 1 Estrella Brinky a la tarjeta del cliente.'
   );
 }
@@ -927,3 +1116,11 @@ document.querySelectorAll('[data-message-filter]').forEach(b=>b.addEventListener
 $('searchMessages')?.addEventListener('input',renderMessages);
 $('clearSentMessages')?.addEventListener('click',()=>{if(confirm('¿Eliminar el historial de mensajes enviados?'))setMessages(getMessages().filter(m=>m.status!=='sent'))});
 updateMessageCounters();renderMessages();
+
+
+// Productividad v6.3
+installEnterNavigation(form);
+installEnterNavigation(quoteForm);
+installProductivityShortcuts();
+const initialCapturePrefs=getCapturePrefs();
+if($('paymentMethod')&&initialCapturePrefs.paymentMethod)$('paymentMethod').value=initialCapturePrefs.paymentMethod;

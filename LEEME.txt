@@ -1,19 +1,43 @@
-BRINKY SUITE PRO v6.2 — CÓDIGO DE REFERENCIA VALIDADO
+BRINKY SUITE PRO v6.3 — CAPTURA RÁPIDA
 
-NOVEDADES
-- Campo “Código de referencia” en Nuevo contrato.
-- Validación automática contra los socios existentes de Club Brinky.
-- Muestra el nombre del socio cuando el código es válido.
-- Impide códigos inexistentes, autorreferencias y beneficios repetidos.
-- Guarda el código y el socio referente dentro del contrato.
-- Al marcar el servicio como realizado:
-  • el cliente recibe su estrella normal por la renta;
-  • si la referencia es válida, el cliente recibe 1 estrella adicional;
-  • el socio que recomendó recibe 1 estrella;
-  • se generan los mensajes pendientes correspondientes.
-- La recompensa por referencia solo puede aplicarse una vez.
-- El código aparece en la vista previa del contrato.
-- Mantiene las correcciones UTF-8 y el envío de tarjeta + mensaje de la v6.1.
+CAMBIOS PRINCIPALES
 
-IMPORTANTE
-Las estrellas por referencia se entregan únicamente cuando el contrato se marca como REALIZADO.
+1. REGLA DE REFERIDOS CORREGIDA
+- El cliente que utiliza un código válido recibe UNA sola estrella total por su primera renta.
+- El socio que lo recomendó recibe UNA estrella.
+- El cliente ya no recibe dos estrellas por la misma renta.
+- Las estrellas solo se aplican cuando el contrato se marca como REALIZADO.
+- El Código de Referencia continúa exactamente como se pidió:
+  • escritura manual;
+  • validación automática;
+  • sin listas;
+  • sin sugerencias;
+  • sin autocompletado.
+
+2. CAPTURA CON TECLADO
+- ENTER avanza al siguiente campo en contratos y cotizaciones.
+- SHIFT + ENTER regresa al campo anterior.
+- El contenido del siguiente campo se selecciona automáticamente cuando es posible.
+- En campos de observaciones/notas, ENTER conserva el salto de línea.
+- Al terminar el último campo, ENTER genera la vista previa.
+
+3. CLIENTES EXISTENTES
+- Al terminar de escribir un teléfono conocido, la aplicación pregunta si deseas recuperar sus datos.
+- En contratos puede recuperar nombre, dirección y enlace de Maps disponibles.
+- En cotizaciones puede recuperar nombre y zona/dirección.
+- No modifica ni sugiere Códigos de Referencia.
+
+4. PREFERENCIAS RECORDADAS
+- Recuerda el último servicio principal utilizado.
+- Recuerda la última duración.
+- Recuerda el último método de pago del contrato.
+
+5. ATAJOS
+- F2: Nuevo contrato.
+- F3: Nueva cotización.
+- F5: Guardar la pantalla actual.
+- F6: Generar vista previa.
+- F7: Compartir por WhatsApp cuando la vista previa está abierta.
+- ESC: Cerrar la vista previa.
+
+La aplicación conserva todas las funciones de las versiones anteriores.
