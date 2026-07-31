@@ -716,7 +716,7 @@ Hola *${c.name}*. Ya acumulaste *${c.stamps} Estrellas Brinky* y puedes disfruta
 Escríbenos al realizar tu próxima reservación para aplicar tu beneficio.
 
 Código: *${c.code}*
-Facebook: *${COMPANY.facebook}*`;return `⭐ *Tu Tarjeta Club Brinky fue actualizada*
+Facebook: *${COMPANY.facebook}*`;return `⭐ *¡Tu Tarjeta Club Brinky fue actualizada!*
 
 Hola *${c.name}*. Acabas de recibir una nueva Estrella Brinky.
 
@@ -736,7 +736,58 @@ window.openMessage=id=>{const m=getMessages().find(x=>x.id===id);if(!m)return;cu
 window.cancelMessage=id=>{if(confirm('¿Descartar este mensaje pendiente?'))setMessages(getMessages().filter(x=>x.id!==id))}
 $('closeMessageModal')?.addEventListener('click',()=>$('messageModal').classList.add('hidden'));
 $('saveMessageEdit')?.addEventListener('click',()=>{const items=getMessages(),i=items.findIndex(x=>x.id===currentMessageId);if(i<0)return;items[i].text=$('messageEditor').value.trim();setMessages(items);alert('Mensaje actualizado.')});
-$('sendMessageWhatsApp')?.addEventListener('click',()=>{const items=getMessages(),i=items.findIndex(x=>x.id===currentMessageId);if(i<0)return;items[i].text=$('messageEditor').value.trim();const phone=normalizedPhone(items[i].phone),url=`https://wa.me/${phone?'52'+phone:''}?text=${encodeURIComponent(items[i].text)}`;window.open(url,'_blank');setTimeout(()=>{if(confirm('¿Confirmas que el mensaje fue enviado por WhatsApp?')){items[i].status='sent';items[i].sentAt=new Date().toISOString();setMessages(items);$('messageModal').classList.add('hidden')}},700)});
+async function sharePendingClubMessage(message){
+  const text=String(message.text||'').trim();
+  const client=getLoyalty().find(c=>c.id===message.clientId);
+  const phone=normalizedPhone(message.phone);
+
+  if(client){
+    const blob=await makeLoyaltyCardBlob(client);
+    if(!blob)throw new Error('No se pudo generar la tarjeta.');
+    const file=new File([blob],`Tarjeta_Club_Brinky_${client.code}.png`,{type:'image/png'});
+    const shareData={title:`Tarjeta Club Brinky ${client.code}`,text,files:[file]};
+
+    if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
+      await navigator.share(shareData);
+      return 'shared';
+    }
+
+    saveBlob(blob,file.name);
+    const suffix='\n\n📎 La tarjeta se descargó como imagen. Adjúntala en este chat antes de enviar.';
+    window.open(`https://wa.me/${phone?'52'+phone:''}?text=${encodeURIComponent(text+suffix)}`,'_blank');
+    alert('Este navegador no permite adjuntar la imagen automáticamente. La tarjeta se descargó y WhatsApp se abrió con el mensaje listo.');
+    return 'fallback';
+  }
+
+  window.open(`https://wa.me/${phone?'52'+phone:''}?text=${encodeURIComponent(text)}`,'_blank');
+  return 'text-only';
+}
+
+$('sendMessageWhatsApp')?.addEventListener('click',async()=>{
+  const items=getMessages(),i=items.findIndex(x=>x.id===currentMessageId);
+  if(i<0)return;
+  const btn=$('sendMessageWhatsApp'),oldLabel=btn.textContent;
+  items[i].text=$('messageEditor').value.trim();
+  btn.disabled=true;btn.textContent='Preparando tarjeta...';
+  try{
+    await sharePendingClubMessage(items[i]);
+    if(confirm('¿Confirmas que la tarjeta y el mensaje fueron enviados por WhatsApp?')){
+      items[i].status='sent';
+      items[i].sentAt=new Date().toISOString();
+      setMessages(items);
+      $('messageModal').classList.add('hidden');
+    }else{
+      localStorage.setItem(MESSAGES_KEY,JSON.stringify(items));
+    }
+  }catch(error){
+    if(error?.name!=='AbortError'){
+      console.error(error);
+      alert('No fue posible compartir la tarjeta. Intenta nuevamente o usa el botón de la tarjeta del socio.');
+    }
+  }finally{
+    btn.disabled=false;btn.textContent=oldLabel;
+  }
+});
 document.querySelectorAll('[data-message-filter]').forEach(b=>b.addEventListener('click',()=>{messageFilter=b.dataset.messageFilter;document.querySelectorAll('[data-message-filter]').forEach(x=>x.classList.toggle('active',x===b));renderMessages()}));
 $('searchMessages')?.addEventListener('input',renderMessages);
 $('clearSentMessages')?.addEventListener('click',()=>{if(confirm('¿Eliminar el historial de mensajes enviados?'))setMessages(getMessages().filter(m=>m.status!=='sent'))});
