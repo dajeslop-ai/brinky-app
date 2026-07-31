@@ -1,45 +1,42 @@
-BRINKY SUITE PRO v6.5 — PERSONALIZACIÓN CLUB BRINKY
+BRINKY SUITE PRO v7.0 — SMART ASSISTANT
 
-NOVEDADES
+CAMBIOS MATERIALIZADOS
 
-APARIENCIA DE LA TARJETA
-- Conserva intacta la estructura y funcionalidad.
-- Permite cambiar:
-  • fondo sólido;
-  • degradado;
-  • imagen de fondo;
-  • color principal;
-  • color secundario;
-  • color del texto;
-  • color de las estrellas.
-- Estilos rápidos:
-  • Verde Brinky;
-  • Azul Fiesta;
-  • Dorado VIP;
-  • Diversión.
-- Vista previa antes de usar el diseño.
-- Restauración del diseño original.
-- Las imágenes grandes se redimensionan y comprimen automáticamente.
+1. INICIO
+- “Total contratado” fue reemplazado por “Próximo evento”.
+- Muestra fecha u HOY, hora, cliente y primer servicio.
+- Ignora contratos ya realizados.
+- Si no hay eventos, informa “Sin eventos”.
 
-PLANTILLAS DE WHATSAPP
-- Mensajes editables para:
-  • bienvenida;
-  • actualización;
-  • premio desbloqueado;
-  • referencia.
-- Variables automáticas:
-  {NOMBRE}, {CODIGO}, {ESTRELLAS}, {META}, {FALTANTES},
-  {RECOMPENSA}, {PROGRESO}, {FACEBOOK}.
-- Enlace o nombre de Facebook editable.
-- Vista previa del mensaje.
-- Restauración de mensajes originales.
-- Las plantillas guardadas se usan en los mensajes nuevos.
+2. CAPTURA RÁPIDA
+- ENTER y SHIFT + ENTER conservan su funcionamiento.
+- La pantalla ahora se desplaza automáticamente y centra el siguiente campo.
+- Funciona en Nuevo contrato y Cotización.
 
-REGLA DE REFERENCIAS
-- Se conserva una sola estrella para el cliente que usa la referencia.
-- Se conserva una sola estrella para quien recomienda.
-- Se corrigió también el alta manual desde Club Brinky para evitar dos estrellas.
+3. MENSAJE PROMOCIONAL DEL PDF
+- Nuevo editor dentro de la ventana de contratos.
+- Permite modificar el texto que aparece junto a Facebook al final del contrato.
+- Incluye vista previa, guardar y restaurar.
+- El texto guardado se usa en vista previa, PDF y WhatsApp.
 
-IMPORTANTE
-- Las personalizaciones se guardan en el dispositivo.
-- Se recomienda incluirlas en los respaldos de la aplicación.
+4. CONTRATOS UNIFICADOS
+- Nuevo contrato y Contratos guardados están en una sola ventana.
+- Contratos guardados aparece al final.
+- El acceso “Contratos” abre la misma ventana y baja automáticamente al historial.
+
+5. TERMINOLOGÍA CLUB BRINKY
+- “Clientes” fue cambiado por “Socios”.
+- “Clientes del Club” ahora es “Socios Club”.
+- El contador superior muestra socios.
+
+6. PERSONALIZACIÓN DE TARJETA
+- “Personalización Club Brinky” ahora es “Personalización de Tarjeta Socio”.
+- Fue movida al final de la ventana Club, después de Socios Club.
+- Conserva colores, fondos, estilos y vista previa.
+
+7. PLANTILLAS DE WHATSAPP
+- Fueron retiradas de Club.
+- Ahora aparecen al final de la ventana Mensajes, después de la Bandeja de mensajes.
+- Conservan edición, vista previa, Facebook editable y restauración.
+
+Se mantienen las reglas de referidos, reportes liquidados, captura rápida y demás funciones de la v6.5.

@@ -3,7 +3,7 @@ const form = $('contractForm');
 const servicesList = $('servicesList');
 const serviceTemplate = $('serviceTemplate');
 const STORAGE_KEY = 'brinky_contracts_v1';
-const APP_VERSION='6.5';
+const APP_VERSION='7.0';
 const QUOTES_KEY='brinky_quotes_v1';
 const EXPENSES_KEY='brinky_expenses_v1';
 const LOYALTY_KEY='brinky_loyalty_v1';
@@ -11,6 +11,7 @@ const LOYALTY_SETTINGS_KEY='brinky_loyalty_settings_v1';
 const MESSAGES_KEY='brinky_messages_v1';
 const CLUB_APPEARANCE_KEY='brinky_club_appearance_v1';
 const CLUB_TEMPLATES_KEY='brinky_club_templates_v1';
+const PDF_PROMO_KEY='brinky_pdf_promo_v1';
 const COMPANY = {
   name:'BRINKY FIESTA',
   address:'Calle 13 x 18 y 20, Col. Centro, Umán, Yucatán',
@@ -150,7 +151,10 @@ function saveCapturePrefs(patch){
 }
 function focusAndSelect(el){
   if(!el||el.disabled||el.hidden)return;
-  el.focus({preventScroll:false});
+  el.focus({preventScroll:true});
+  setTimeout(()=>{
+    try{el.scrollIntoView({behavior:'smooth',block:'center',inline:'nearest'})}catch{}
+  },60);
   if(typeof el.select==='function' && !['select-one','select-multiple','date','time'].includes(el.type)){
     try{el.select()}catch{}
   }
@@ -228,10 +232,10 @@ function lookupContractClient(){
   const found=latestClientDataByPhone(phone);
   if(!found){hideLookupStatus('contractClientLookup');return}
   lastClientLookup.contract=key;
-  showLookupStatus('contractClientLookup',`✓ Cliente encontrado: ${found.name}`);
+  showLookupStatus('contractClientLookup',`✓ Socio encontrado: ${found.name}`);
   const currentName=$('clientName')?.value.trim()||'';
   const shouldAsk=!currentName||currentName.toLowerCase()!==found.name.toLowerCase();
-  if(shouldAsk&&confirm(`Cliente encontrado: ${found.name}\n\n¿Deseas cargar sus datos anteriores?`)){
+  if(shouldAsk&&confirm(`Socio encontrado: ${found.name}\n\n¿Deseas cargar sus datos anteriores?`)){
     $('clientName').value=found.name||'';
     if(found.address)$('eventAddress').value=found.address;
     if(found.mapsLink)$('mapsLink').value=found.mapsLink;
@@ -246,10 +250,10 @@ function lookupQuoteClient(){
   const found=latestClientDataByPhone(phone);
   if(!found){hideLookupStatus('quoteClientLookup');return}
   lastClientLookup.quote=key;
-  showLookupStatus('quoteClientLookup',`✓ Cliente encontrado: ${found.name}`);
+  showLookupStatus('quoteClientLookup',`✓ Socio encontrado: ${found.name}`);
   const currentName=$('quoteClientName')?.value.trim()||'';
   const shouldAsk=!currentName||currentName.toLowerCase()!==found.name.toLowerCase();
-  if(shouldAsk&&confirm(`Cliente encontrado: ${found.name}\n\n¿Deseas cargar sus datos anteriores en la cotización?`)){
+  if(shouldAsk&&confirm(`Socio encontrado: ${found.name}\n\n¿Deseas cargar sus datos anteriores en la cotización?`)){
     $('quoteClientName').value=found.name||'';
     if(found.address)$('quoteAddress').value=found.address;
   }
@@ -514,6 +518,25 @@ function validateAvailability(data){
 const money = n => new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(n||0);
 const dateFmt = s => s ? new Date(`${s}T12:00:00`).toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'}) : '';
 
+
+const DEFAULT_PDF_PROMO={
+  message:'Tu recomendación nos ayuda a que más familias conozcan Brinky Fiesta. Visita nuestra página Brincolines Brinky Fiesta para conocer promociones, nuevos servicios y novedades.'
+};
+function getPdfPromo(){
+  try{return {...DEFAULT_PDF_PROMO,...JSON.parse(localStorage.getItem(PDF_PROMO_KEY)||'{}')}}catch{return {...DEFAULT_PDF_PROMO}}
+}
+function setPdfPromo(data){localStorage.setItem(PDF_PROMO_KEY,JSON.stringify(data))}
+function fillPdfPromoEditor(){
+  if($('pdfPromoMessage'))$('pdfPromoMessage').value=getPdfPromo().message||'';
+}
+function renderPdfPromoPreview(){
+  const message=$('pdfPromoMessage')?.value.trim()||DEFAULT_PDF_PROMO.message;
+  const el=$('pdfPromoPreview');
+  if(!el)return;
+  el.innerHTML=`<strong>¿Disfrutaste nuestro servicio?</strong><p>${escapeHtml(message)}</p><span>Facebook: Brincolines Brinky Fiesta</span>`;
+  el.classList.remove('hidden');
+}
+
 function renderPreview(d){
   currentPreviewData = d;
   const rows=d.services.map(s=>`<tr><td>${escapeHtml(s.name)}</td><td>${s.qty}</td><td>${escapeHtml(s.durationLabel)}</td><td class="money">${money(s.price)}</td></tr>`).join('');
@@ -547,7 +570,7 @@ function renderPreview(d){
       <img src="assets/facebook-banner.jpg" alt="Brincolines Brinky Fiesta en Facebook">
       <div class="facebook-cta-copy">
         <h3>¿Disfrutaste nuestro servicio?</h3>
-        <p>Tu recomendación nos ayuda a que más familias conozcan Brinky Fiesta. Visita nuestra página <strong>Brincolines Brinky Fiesta</strong> y déjanos una buena referencia.</p>
+        <p>${escapeHtml(getPdfPromo().message)}</p>
         <a href="https://www.facebook.com/search/top?q=Brincolines%20Brinky%20Fiesta" target="_blank" rel="noopener">Abrir nuestra página de Facebook</a>
       </div>
     </section>`;
@@ -563,8 +586,19 @@ function renderSaved(){
 }
 function renderDashboard(){
   const items=getContracts();const today=new Date();today.setHours(0,0,0,0);
-  const upcoming=items.filter(d=>d.eventDate&&new Date(d.eventDate+'T12:00:00')>=today).sort((a,b)=>a.eventDate.localeCompare(b.eventDate));
-  $('statContracts').textContent=items.length;$('statUpcoming').textContent=upcoming.length;$('statIncome').textContent=money(items.reduce((a,d)=>a+Number(d.total||0),0));
+  const upcoming=items.filter(d=>!d.completed&&d.eventDate&&new Date(d.eventDate+'T12:00:00')>=today)
+    .sort((a,b)=>(a.eventDate+(a.startTime||'')).localeCompare(b.eventDate+(b.startTime||'')));
+  $('statContracts').textContent=items.length;
+  $('statUpcoming').textContent=upcoming.length;
+  const next=upcoming[0];
+  if(next){
+    const nextDate=new Date(next.eventDate+'T12:00:00'),isToday=nextDate.toDateString()===today.toDateString();
+    $('statNextEvent').textContent=isToday?`HOY ${next.startTime||''}`.trim():dateFmt(next.eventDate);
+    $('statNextEventDetail').textContent=`${next.clientName} · ${(next.services&&next.services[0]?.name)||'Evento'}`;
+  }else{
+    $('statNextEvent').textContent='Sin eventos';
+    $('statNextEventDetail').textContent='No hay eventos pendientes';
+  }
   $('upcomingList').innerHTML=upcoming.length?upcoming.slice(0,5).map(d=>`<div class="upcoming-item"><div><strong>${escapeHtml(d.clientName)}</strong><div class="saved-meta">${dateFmt(d.eventDate)} · ${d.startTime||''} · ${escapeHtml((d.services&&d.services[0]?.name)||'Evento')}</div></div><span class="event-pill">Reservado</span></div>`).join(''):'<div class="empty">No hay próximos eventos registrados.</div>';
 }
 window.openSaved=id=>{const d=getContracts().find(x=>x.id===id);if(d){previewIsNewContract=false;renderPreview(d)}};
@@ -710,7 +744,7 @@ async function contractCanvas(d){
     const bw=430,bh=154;g.drawImage(banner,L+18,ctaTop+18,bw,bh);
   }catch{}
   g.fillStyle='#08752f';g.font='bold 23px Arial';g.fillText('¿Disfrutaste nuestro servicio?',L+475,ctaTop+48);
-  g.fillStyle='#263238';g.font='17px Arial';drawWrappedText(g,'Tu recomendación nos ayuda a que más familias conozcan Brinky Fiesta. Visita nuestra página Brincolines Brinky Fiesta y déjanos una buena referencia.',L+475,ctaTop+82,R-(L+475)-20,22,5);
+  g.fillStyle='#263238';g.font='17px Arial';drawWrappedText(g,getPdfPromo().message,L+475,ctaTop+82,R-(L+475)-20,22,5);
   g.fillStyle='#1877f2';g.font='bold 18px Arial';g.fillText('Facebook: Brincolines Brinky Fiesta',L+475,ctaTop+192);
   g.textAlign='center';g.font='15px Arial';g.fillStyle='#555';g.fillText('Brinky Fiesta · WhatsApp 999 447 6314 · Facebook: Brincolines Brinky Fiesta',W/2,H-36);
   return c;
@@ -764,11 +798,22 @@ $('searchContracts').addEventListener('input',renderSaved);
 $('reportMonth').addEventListener('change',renderReports);$('reportYear').addEventListener('change',renderReports);
 $('expenseForm').addEventListener('submit',e=>{e.preventDefault();const amount=Number($('expenseAmount').value||0);if(amount<=0)return;const items=getExpenses();items.unshift({id:'EXP-'+Date.now(),date:$('expenseDate').value,category:$('expenseCategory').value,description:$('expenseDescription').value.trim(),amount});localStorage.setItem(EXPENSES_KEY,JSON.stringify(items));$('expenseDescription').value='';$('expenseAmount').value='';const d=new Date($('expenseDate').value+'T12:00:00');$('reportMonth').value=String(d.getMonth()+1);$('reportYear').value=String(d.getFullYear());renderReports();});
 function showView(name){
-  const map={home:'homeView',new:'newView',quotes:'quotesView',contracts:'contractsView',reports:'reportsView',loyalty:'loyaltyView',messages:'messagesView'};
+  const map={home:'homeView',new:'newView',quotes:'quotesView',contracts:'newView',reports:'reportsView',loyalty:'loyaltyView',messages:'messagesView'};
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   $(map[name]||'homeView').classList.add('active');
   document.querySelectorAll('[data-go]').forEach(b=>b.classList.toggle('active',b.dataset.go===name));
-  if(name==='home')renderDashboard();if(name==='contracts')renderSaved();if(name==='quotes')renderQuotes();if(name==='reports')renderReports();if(name==='loyalty')renderLoyalty();if(name==='messages')renderMessages();window.scrollTo(0,0);
+  if(name==='home')renderDashboard();
+  if(name==='contracts'){
+    renderSaved();
+    setTimeout(()=>$('savedContractsSection')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
+    return;
+  }
+  if(name==='new')setTimeout(()=>focusAndSelect($('clientName')),80);
+  if(name==='quotes')renderQuotes();
+  if(name==='reports')renderReports();
+  if(name==='loyalty')renderLoyalty();
+  if(name==='messages')renderMessages();
+  window.scrollTo(0,0);
 }
 document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.go)));
 // PWA
@@ -1210,7 +1255,7 @@ async function makeLoyaltyCardBlob(c){
   return await new Promise(res=>canvas.toBlob(res,'image/png'));
 }
 function saveBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-$('searchLoyalty')?.addEventListener('input',renderLoyalty);$('closeLoyaltyModal')?.addEventListener('click',()=>$('loyaltyModal').classList.add('hidden'));$('addStampBtn')?.addEventListener('click',()=>updateCurrentLoyalty(1,'Estrella Brinky agregada manualmente','stamp'));$('removeStampBtn')?.addEventListener('click',()=>updateCurrentLoyalty(-1,'Estrella Brinky retirada manualmente'));$('redeemRewardBtn')?.addEventListener('click',()=>{const c=getLoyalty().find(x=>x.id===currentLoyaltyId),r=c&&rewardStatus(c);if(!r){alert('El cliente todavía no tiene un premio disponible.');return}if(confirm(`¿Canjear ${r.name} y descontar ${r.target} Estrellas Brinky?`))updateCurrentLoyalty(-r.target,`Premio canjeado: ${r.name}`,'redeem')});
+$('searchLoyalty')?.addEventListener('input',renderLoyalty);$('closeLoyaltyModal')?.addEventListener('click',()=>$('loyaltyModal').classList.add('hidden'));$('addStampBtn')?.addEventListener('click',()=>updateCurrentLoyalty(1,'Estrella Brinky agregada manualmente','stamp'));$('removeStampBtn')?.addEventListener('click',()=>updateCurrentLoyalty(-1,'Estrella Brinky retirada manualmente'));$('redeemRewardBtn')?.addEventListener('click',()=>{const c=getLoyalty().find(x=>x.id===currentLoyaltyId),r=c&&rewardStatus(c);if(!r){alert('El socio todavía no tiene un premio disponible.');return}if(confirm(`¿Canjear ${r.name} y descontar ${r.target} Estrellas Brinky?`))updateCurrentLoyalty(-r.target,`Premio canjeado: ${r.name}`,'redeem')});
 $('shareLoyaltyWhatsApp')?.addEventListener('click',async()=>{const c=getLoyalty().find(x=>x.id===currentLoyaltyId);if(!c)return;try{const blob=await makeLoyaltyCardBlob(c),file=new File([blob],`Tarjeta_Club_Brinky_${c.code}.png`,{type:'image/png'}),text=loyaltyMessage(c);if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({title:`Tarjeta Club Brinky ${c.code}`,text,files:[file]});}else{saveBlob(blob,file.name);const phone=normalizedPhone(c.phone);window.open(`https://wa.me/${phone?'52'+phone:''}?text=${encodeURIComponent(text+'\n\n📎 La tarjeta con el QR se descargó como imagen. Adjúntala en este chat.')}`,'_blank');alert('La tarjeta con QR se descargó como imagen. WhatsApp se abrirá para que la adjuntes.');}}catch(e){if(e?.name!=='AbortError')alert('No se pudo generar o compartir la tarjeta con QR. Verifica tu conexión a internet.')}});
 $('downloadLoyaltyQr')?.addEventListener('click',async()=>{const c=getLoyalty().find(x=>x.id===currentLoyaltyId);if(!c)return;try{saveBlob(await fetchQrBlob(c),`QR_Club_Brinky_${c.code}.png`)}catch{alert('No se pudo descargar el QR. Verifica tu conexión a internet.')}});
 $('shareLoyaltyCard')?.addEventListener('click',async()=>{const c=getLoyalty().find(x=>x.id===currentLoyaltyId);if(!c)return;try{const blob=await makeLoyaltyCardBlob(c),file=new File([blob],`Tarjeta_Club_Brinky_${c.code}.png`,{type:'image/png'});if(navigator.canShare?.({files:[file]})){await navigator.share({title:'Tarjeta Club Brinky',text:loyaltyMessage(c),files:[file]})}else{saveBlob(blob,file.name);alert('La tarjeta se descargó como imagen. Puedes adjuntarla en WhatsApp.')}}catch(e){if(e?.name!=='AbortError')alert('No se pudo compartir la tarjeta. Verifica tu conexión a internet.')}});
@@ -1270,6 +1315,22 @@ $('previewMessageTemplate')?.addEventListener('click',()=>{
 });
 fillCustomizationControls();
 loadTemplateEditor();
+fillPdfPromoEditor();
+
+$('savePdfPromo')?.addEventListener('click',()=>{
+  const message=$('pdfPromoMessage')?.value.trim();
+  if(!message){alert('Escribe un mensaje antes de guardarlo.');return}
+  setPdfPromo({message});
+  renderPdfPromoPreview();
+  alert('Mensaje promocional guardado. Se usará automáticamente en los próximos contratos y PDF.');
+});
+$('restorePdfPromo')?.addEventListener('click',()=>{
+  if(!confirm('¿Restaurar el mensaje promocional original?'))return;
+  setPdfPromo({...DEFAULT_PDF_PROMO});
+  fillPdfPromoEditor();
+  renderPdfPromoPreview();
+});
+$('previewPdfPromo')?.addEventListener('click',renderPdfPromoPreview);
 
 $('printLoyaltyCard')?.addEventListener('click',()=>{document.body.classList.add('printing-loyalty');window.print();setTimeout(()=>document.body.classList.remove('printing-loyalty'),500)});renderLoyalty();
 

@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#16a34a"><title>Brinky Suite Pro</title>
 <link rel="manifest" href="manifest.json"><link rel="icon" href="icons/icon-192.png?v=37"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=36">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Brinky Suite">
-<link rel="stylesheet" href="styles.css?v=61">
+<link rel="stylesheet" href="styles.css?v=70">
 </head>
 <body>
 <header class="topbar">
@@ -15,12 +15,12 @@
 </header>
 <main>
 <section id="homeView" class="view active">
-  <div class="welcome card"><div><span class="badge">Versión 6.5 · Personalización Club</span><h2>Bienvenido</h2><p>Administra tus contratos desde el smartphone.</p></div><img src="icons/icon-192.png?v=37" alt="Brinky"></div>
+  <div class="welcome card"><div><span class="badge">Versión 7.0 · Smart Assistant</span><h2>Bienvenido</h2><p>Administra tus contratos desde el smartphone.</p></div><img src="icons/icon-192.png?v=37" alt="Brinky"></div>
   <div class="stats">
     <article class="stat card"><b id="statContracts">0</b><span>Contratos guardados</span></article>
     <article class="stat card"><b id="statUpcoming">0</b><span>Próximos eventos</span></article>
-    <article class="stat card"><b id="statIncome">$0</b><span>Total contratado</span></article>
-    <article class="stat card"><b id="statMembers">0</b><span>Miembros Club Brinky</span></article>
+    <article class="stat card smart-next-event"><b id="statNextEvent">Sin eventos</b><span>Próximo evento</span><small id="statNextEventDetail">No hay eventos pendientes</small></article>
+    <article class="stat card"><b id="statMembers">0</b><span>Socios Club Brinky</span></article>
     <article class="stat card"><b id="statMessages">0</b><span>Mensajes pendientes</span></article>
   </div>
   <section class="card"><h3>Menú principal</h3><div class="quick-grid">
@@ -60,6 +60,25 @@
     <section class="card"><div class="section-head"><div><h3>Firma del cliente</h3><p>Firma con el dedo dentro del recuadro.</p></div><button type="button" id="clearSignature" class="btn btn-light">Limpiar</button></div><canvas id="signatureCanvas"></canvas></section>
     <div class="form-actions"><button type="button" id="saveBtn" class="btn btn-blue">Guardar borrador</button><button type="submit" class="btn btn-primary">Generar contrato</button></div>
   </form>
+
+  <section class="card pdf-promo-settings">
+    <div class="section-head"><div><h3>📣 Mensaje promocional del PDF</h3><p>Este texto aparecerá junto a la imagen y el enlace de Facebook al final de los contratos.</p></div></div>
+    <label>Mensaje promocional
+      <textarea id="pdfPromoMessage" rows="5" maxlength="650" placeholder="Escribe promociones, servicios nuevos, concursos o avisos para tus clientes."></textarea>
+    </label>
+    <div class="custom-actions">
+      <button id="previewPdfPromo" type="button" class="btn btn-blue">Vista previa</button>
+      <button id="savePdfPromo" type="button" class="btn btn-primary">Guardar mensaje</button>
+      <button id="restorePdfPromo" type="button" class="btn btn-light">Restaurar original</button>
+    </div>
+    <div id="pdfPromoPreview" class="pdf-promo-preview hidden"></div>
+  </section>
+
+  <section id="savedContractsSection" class="card">
+    <div class="section-head"><div><span class="badge">Historial</span><h2>Contratos guardados</h2><p>Consulta, finaliza o elimina contratos sin salir de esta ventana.</p></div><button id="clearAllBtn" class="btn btn-danger-light">Borrar todos</button></div>
+    <input id="searchContracts" class="search" placeholder="Buscar por cliente, teléfono o folio">
+    <div id="savedContracts"></div>
+  </section>
 </section>
 
 
@@ -84,7 +103,6 @@
   <section class="card"><div class="section-head"><div><h3>Cotizaciones guardadas</h3><p>Consulta, envía o convierte una cotización en contrato.</p></div></div><input id="searchQuotes" class="search" placeholder="Buscar por cliente, teléfono o folio"><div id="savedQuotes"></div></section>
 </section>
 
-<section id="contractsView" class="view"><section class="card"><div class="section-head"><div><span class="badge">Historial</span><h2>Contratos guardados</h2><p>La información se guarda en este dispositivo.</p></div><button id="clearAllBtn" class="btn btn-danger-light">Borrar todos</button></div><input id="searchContracts" class="search" placeholder="Buscar por cliente, teléfono o folio"><div id="savedContracts"></div></section></section>
 
 <section id="reportsView" class="view">
   <section class="card">
@@ -118,14 +136,22 @@
 </section>
 
 <section id="loyaltyView" class="view">
-  <section class="card hero"><div><span class="badge">Club Brinky</span><h2>Tarjeta de fidelidad digital</h2><p>Administra clientes, Estrellas Brinky, premios, QR y referidos.</p></div><div class="folio">⭐ <strong id="loyaltyClientCount">0</strong> clientes</div></section>
+  <section class="card hero"><div><span class="badge">Club Brinky</span><h2>Tarjeta de fidelidad digital</h2><p>Administra socios, Estrellas Brinky, premios, QR y referidos.</p></div><div class="folio">⭐ <strong id="loyaltyClientCount">0</strong> socios</div></section>
   <section class="card"><div class="section-head"><div><h3>Configuración de recompensas</h3><p>Modifica las metas sin reprogramar la aplicación.</p></div></div><div class="grid two">
     <label>Primera meta (Estrellas Brinky)<input id="reward1Stamps" type="number" min="1" value="4"></label><label>Premio<input id="reward1Name" value="50% de descuento"></label>
     <label>Segunda meta (Estrellas Brinky)<input id="reward2Stamps" type="number" min="1" value="8"></label><label>Premio<input id="reward2Name" value="1 renta gratis"></label>
   </div><button id="saveLoyaltySettings" class="btn btn-primary">Guardar configuración</button></section>
 
-  <section class="card club-customization">
-    <div class="section-head"><div><h3>🎨 Personalización Club Brinky</h3><p>Cambia la apariencia y los mensajes sin modificar la programación.</p></div></div>
+  <section class="card"><div class="section-head"><div><h3>Registrar socio</h3><p>El teléfono evita registros duplicados.</p></div></div><form id="loyaltyForm" class="grid two">
+    <label>Nombre completo<input id="loyaltyName" required></label><label>Teléfono / WhatsApp<input id="loyaltyPhone" required inputmode="tel"></label>
+    <label>Fecha de cumpleaños<input id="loyaltyBirthday" type="date"></label><label>Código de quien recomendó<input id="loyaltyReferrer" placeholder="Ej. BRK-0001"></label>
+    <label class="full">Notas<input id="loyaltyNotes" placeholder="Preferencias, colonia, festejado..."></label><button class="btn btn-primary" type="submit">Guardar socio</button>
+  </form></section>
+  <section class="card"><div class="section-head"><div><h3>Socios Club</h3><p>Busca por nombre, teléfono o código.</p></div></div><input id="searchLoyalty" class="search" placeholder="Buscar socio"><div id="loyaltyList"></div></section>
+
+
+<section class="card club-customization">
+    <div class="section-head"><div><h3>🎨 Personalización de Tarjeta Socio</h3><p>Cambia colores o fondo sin alterar la estructura de la tarjeta.</p></div></div>
 
     <details open>
       <summary><b>Apariencia de la tarjeta</b></summary>
@@ -163,6 +189,21 @@
       <img id="cardAppearancePreview" class="card-appearance-preview hidden" alt="Vista previa de tarjeta">
     </details>
 
+  </section>
+</section>
+</main>
+
+<section id="messagesView" class="view">
+  <section class="card hero"><div><span class="badge">Centro de mensajes</span><h2>WhatsApp asistido</h2><p>Revisa, edita y envía mensajes sin perder el control.</p></div><div class="folio">🔔 <strong id="messagePendingCount">0</strong> pendientes</div></section>
+  <section class="card">
+    <div class="section-head"><div><h3>Bandeja de mensajes</h3><p>Los mensajes se preparan automáticamente y tú confirmas el envío.</p></div><button id="clearSentMessages" class="btn btn-light">Limpiar enviados</button></div>
+    <div class="message-tabs"><button class="message-tab active" data-message-filter="pending">Pendientes</button><button class="message-tab" data-message-filter="sent">Enviados</button><button class="message-tab" data-message-filter="all">Todos</button></div>
+    <input id="searchMessages" class="search" placeholder="Buscar por nombre, teléfono o tipo de mensaje">
+    <div id="messagesList"></div>
+  </section>
+
+  <section class="card message-template-settings">
+    <div class="section-head"><div><h3>✍️ Plantillas de WhatsApp</h3><p>Modifica y guarda los mensajes que se usarán automáticamente con los socios.</p></div></div>
     <details>
       <summary><b>Plantillas de WhatsApp</b></summary>
       <p class="field-help">Variables disponibles: {NOMBRE}, {CODIGO}, {ESTRELLAS}, {META}, {FALTANTES}, {RECOMPENSA}, {PROGRESO}, {FACEBOOK}.</p>
@@ -182,24 +223,6 @@
       <pre id="messageTemplatePreview" class="message-template-preview hidden"></pre>
     </details>
   </section>
-
-  <section class="card"><div class="section-head"><div><h3>Registrar cliente</h3><p>El teléfono evita registros duplicados.</p></div></div><form id="loyaltyForm" class="grid two">
-    <label>Nombre completo<input id="loyaltyName" required></label><label>Teléfono / WhatsApp<input id="loyaltyPhone" required inputmode="tel"></label>
-    <label>Fecha de cumpleaños<input id="loyaltyBirthday" type="date"></label><label>Código de quien recomendó<input id="loyaltyReferrer" placeholder="Ej. BRK-0001"></label>
-    <label class="full">Notas<input id="loyaltyNotes" placeholder="Preferencias, colonia, festejado..."></label><button class="btn btn-primary" type="submit">Guardar cliente</button>
-  </form></section>
-  <section class="card"><div class="section-head"><div><h3>Clientes del Club</h3><p>Busca por nombre, teléfono o código.</p></div></div><input id="searchLoyalty" class="search" placeholder="Buscar cliente"><div id="loyaltyList"></div></section>
-</section>
-</main>
-
-<section id="messagesView" class="view">
-  <section class="card hero"><div><span class="badge">Centro de mensajes</span><h2>WhatsApp asistido</h2><p>Revisa, edita y envía mensajes sin perder el control.</p></div><div class="folio">🔔 <strong id="messagePendingCount">0</strong> pendientes</div></section>
-  <section class="card">
-    <div class="section-head"><div><h3>Bandeja de mensajes</h3><p>Los mensajes se preparan automáticamente y tú confirmas el envío.</p></div><button id="clearSentMessages" class="btn btn-light">Limpiar enviados</button></div>
-    <div class="message-tabs"><button class="message-tab active" data-message-filter="pending">Pendientes</button><button class="message-tab" data-message-filter="sent">Enviados</button><button class="message-tab" data-message-filter="all">Todos</button></div>
-    <input id="searchMessages" class="search" placeholder="Buscar por nombre, teléfono o tipo de mensaje">
-    <div id="messagesList"></div>
-  </section>
 </section>
 
 <nav class="bottom-nav"><button data-go="home" class="active">⌂<span>Inicio</span></button><button data-go="quotes">🧾<span>Cotizar</span></button><button data-go="new">＋<span>Nuevo</span></button><button data-go="contracts">▤<span>Contratos</span></button><button data-go="loyalty">⭐<span>Club</span></button><button data-go="messages">💬<span>Mensajes</span><i id="navMessageBadge" class="nav-badge hidden">0</i></button><button data-go="reports">▥<span>Reportes</span></button></nav>
@@ -212,5 +235,5 @@
 
 <div id="messageModal" class="modal hidden"><div class="modal-content message-modal"><div class="modal-actions"><button id="closeMessageModal" class="btn btn-light">Cerrar</button><button id="saveMessageEdit" class="btn btn-blue">Guardar cambios</button><button id="sendMessageWhatsApp" class="btn btn-whatsapp">Compartir tarjeta y mensaje</button></div><section class="card"><span id="messageTypeBadge" class="badge"></span><h3 id="messageClientName"></h3><p id="messageClientPhone" class="saved-meta"></p><label>Mensaje<textarea id="messageEditor" rows="14"></textarea></label><p class="field-help">En celulares compatibles se abrirá el menú para compartir la tarjeta PNG junto con el mensaje. Si el navegador no lo permite, la tarjeta se descargará y WhatsApp se abrirá con el texto preparado.</p></section></div></div>
 
-<script src="app.js?v=65"></script>
+<script src="app.js?v=70"></script>
 </body></html>

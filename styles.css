@@ -125,3 +125,47 @@ input:focus,select:focus,textarea:focus{
   border-radius:12px;padding:14px;max-height:360px;overflow:auto;
 }
 .loyalty-card .stamp-dot.filled{color:var(--club-star-color,#ffd84d)}
+
+
+/* Brinky Suite Pro v7.0 */
+.smart-next-event b{
+  font-size:clamp(1rem,4.4vw,1.45rem);
+  line-height:1.1;
+}
+.smart-next-event small{
+  display:block;
+  margin-top:5px;
+  color:#5f6870;
+  font-size:.75rem;
+  line-height:1.2;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#savedContractsSection{
+  scroll-margin-top:88px;
+  margin-top:18px;
+}
+.pdf-promo-settings{
+  margin-top:18px;
+}
+.pdf-promo-preview{
+  margin-top:12px;
+  padding:16px;
+  border-radius:14px;
+  background:#eefcf4;
+  border:1px solid #bde8ca;
+}
+.pdf-promo-preview.hidden{display:none}
+.pdf-promo-preview strong{color:#08752f}
+.pdf-promo-preview p{margin:8px 0;color:#263238;white-space:pre-wrap}
+.pdf-promo-preview span{color:#1877f2;font-weight:800}
+.message-template-settings{
+  margin-top:18px;
+}
+.club-customization{
+  margin-top:18px;
+}
+@media (max-width:620px){
+  .smart-next-event small{max-width:140px}
+}
