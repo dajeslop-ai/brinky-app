@@ -1,0 +1,13 @@
+BRINKY SUITE PRO v5.1 - CENTRO DE MENSAJES
+
+Novedades:
+- Estrella de bienvenida automática para nuevos miembros.
+- Mensaje de bienvenida pendiente al registrar un miembro.
+- Mensajes de actualización al agregar estrellas.
+- Mensajes especiales por premio desbloqueado y referidos.
+- Centro de Mensajes con bandejas Pendientes y Enviados.
+- Vista previa, edición, envío por WhatsApp y control de duplicados.
+- Contadores de miembros y mensajes pendientes en Inicio.
+
+Publicación: sube el contenido de esta carpeta a GitHub o arrastra el ZIP a Netlify.
+Los datos continúan guardándose localmente en el dispositivo mediante localStorage.

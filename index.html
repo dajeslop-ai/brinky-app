@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#16a34a"><title>Brinky Suite Pro</title>
+<link rel="manifest" href="manifest.json"><link rel="icon" href="icons/icon-192.png?v=37"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=36">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Brinky Suite">
+<link rel="stylesheet" href="styles.css?v=51">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><img src="icons/icon-192.png?v=37" alt="Ranita Brinky"><div><h1>Brinky Suite Pro</h1><p>Contratos para Brinky Fiesta</p></div></div>
+  <button id="installBtn" class="btn btn-light hidden">Instalar</button>
+  <span id="installedBadge" class="installed hidden">✓ Instalada</span>
+</header>
+<main>
+<section id="homeView" class="view active">
+  <div class="welcome card"><div><span class="badge">Versión 5.1</span><h2>Bienvenido</h2><p>Administra tus contratos desde el smartphone.</p></div><img src="icons/icon-192.png?v=37" alt="Brinky"></div>
+  <div class="stats">
+    <article class="stat card"><b id="statContracts">0</b><span>Contratos guardados</span></article>
+    <article class="stat card"><b id="statUpcoming">0</b><span>Próximos eventos</span></article>
+    <article class="stat card"><b id="statIncome">$0</b><span>Total contratado</span></article>
+    <article class="stat card"><b id="statMembers">0</b><span>Miembros Club Brinky</span></article>
+    <article class="stat card"><b id="statMessages">0</b><span>Mensajes pendientes</span></article>
+  </div>
+  <section class="card"><h3>Acciones rápidas</h3><div class="quick-grid">
+    <button class="quick" data-go="new"><span>📄</span><b>Nuevo contrato</b><small>Crear en minutos</small></button>
+    <button class="quick" data-go="quotes"><span>🧾</span><b>Nueva cotización</b><small>Enviar antes de apartar</small></button>
+    <button class="quick" data-go="contracts"><span>🗂️</span><b>Contratos</b><small>Ver guardados</small></button>
+    <button class="quick" data-go="reports"><span>📊</span><b>Reportes</b><small>Contratos y ganancias</small></button>
+    <button class="quick" data-go="loyalty"><span>⭐</span><b>Club Brinky</b><small>Clientes y recompensas</small></button>
+    <button class="quick" data-go="messages"><span>💬</span><b>Centro de mensajes</b><small>Bienvenidas y actualizaciones</small></button>
+  </div></section>
+  <section class="card install-card" id="installCard"><div><h3>Instala la aplicación</h3><p>Úsala en pantalla completa y sin conexión.</p></div><button id="installCardBtn" class="btn btn-primary">Instalar app</button></section>
+  <section class="card"><div class="section-head"><div><h3>Próximos eventos</h3><p>Rentas registradas con fecha futura.</p></div></div><div id="upcomingList"></div></section>
+</section>
+
+<section id="newView" class="view">
+  <section class="card hero"><div><span class="badge">Nuevo contrato</span><h2>Captura rápida</h2><p>Completa los datos y genera el PDF.</p></div><div class="folio">Folio <strong id="contractNumber"></strong></div></section>
+  <form id="contractForm">
+    <section class="card"><h3>Datos del cliente</h3><div class="grid two">
+      <label>Nombre completo<input id="clientName" required placeholder="Nombre del cliente"></label>
+      <label>Teléfono / WhatsApp<input id="clientPhone" required inputmode="tel" placeholder="999 000 0000"></label>
+      <label class="full">Dirección del evento<input id="eventAddress" required placeholder="Calle, colonia, municipio, referencia"></label>
+      <label class="full">Enlace de Google Maps<input id="mapsLink" type="url" placeholder="https://maps.google.com/..."></label>
+    </div></section>
+    <section class="card"><h3>Datos del evento</h3><div class="grid two">
+      <label>Fecha<input id="eventDate" type="date" required></label><label>Tipo de evento<select id="eventType"><option>Cumpleaños</option><option>Bautizo</option><option>Primera comunión</option><option>Evento escolar</option><option>Evento empresarial</option><option>Otro</option></select></label>
+      <label>Hora de inicio<input id="startTime" type="time" required></label><label>Hora de fin<input id="endTime" type="time" required></label>
+      <label>Hora de instalación<input id="installTime" type="time"></label><label>Hora de retiro<input id="pickupTime" type="time"></label>
+      <label>Número aproximado de niños<input id="childrenCount" type="number" min="0" inputmode="numeric"></label><label>Electricidad disponible<select id="electricity"><option>Sí</option><option>No</option></select></label>
+    </div></section>
+    <section class="card"><div class="section-head"><div><h3>Servicios contratados</h3><p>Agrega cantidad, tiempo y precio.</p></div><button type="button" id="addServiceBtn" class="btn btn-primary">+ Agregar</button></div><div id="servicesList" class="services"></div></section>
+    <section class="card"><h3>Pagos</h3><div class="grid two"><label>Subtotal<input id="subtotal" readonly></label><label>Descuento<input id="discount" type="number" min="0" step=".01" value="0" inputmode="decimal" placeholder="0.00"></label><label class="full">Razón del descuento<input id="discountReason" maxlength="180" placeholder="Ej. Promoción del mes, promoción por paquete, cliente distinguido..."></label><label>Total con descuento<input id="total" readonly></label><label>Anticipo<input id="deposit" type="number" min="0" step=".01" value="0" inputmode="decimal"></label><label>Saldo pendiente<input id="balance" readonly></label><label>Método de pago<select id="paymentMethod"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Otro</option></select></label></div><p class="field-help">El descuento se resta automáticamente del subtotal de los servicios.</p></section>
+    <section class="card"><h3>Condiciones y observaciones</h3><label>Observaciones<textarea id="notes" rows="4" placeholder="Indicaciones especiales, lluvia, acceso, montaje..."></textarea></label><label class="check"><input type="checkbox" id="acceptRules" required> El cliente acepta las condiciones del contrato.</label></section>
+    <section class="card"><div class="section-head"><div><h3>Firma del cliente</h3><p>Firma con el dedo dentro del recuadro.</p></div><button type="button" id="clearSignature" class="btn btn-light">Limpiar</button></div><canvas id="signatureCanvas"></canvas></section>
+    <div class="form-actions"><button type="button" id="saveBtn" class="btn btn-blue">Guardar borrador</button><button type="submit" class="btn btn-primary">Generar contrato</button></div>
+  </form>
+</section>
+
+
+<section id="quotesView" class="view">
+  <section class="card hero"><div><span class="badge">Cotizaciones</span><h2>Nueva cotización</h2><p>Cotiza sin reservar la fecha. Convierte a contrato cuando el cliente confirme.</p></div><div class="folio">Folio <strong id="quoteNumber"></strong></div></section>
+  <form id="quoteForm">
+    <section class="card"><h3>Datos del cliente</h3><div class="grid two">
+      <label>Nombre completo<input id="quoteClientName" required placeholder="Nombre del cliente"></label>
+      <label>Teléfono / WhatsApp<input id="quoteClientPhone" required inputmode="tel" placeholder="999 000 0000"></label>
+      <label class="full">Dirección o zona del evento<input id="quoteAddress" placeholder="Colonia, municipio o referencia"></label>
+    </div></section>
+    <section class="card"><h3>Datos de la cotización</h3><div class="grid two">
+      <label>Fecha tentativa del evento<input id="quoteEventDate" type="date"></label>
+      <label>Vigencia<select id="quoteValidity"><option value="3">3 días</option><option value="5">5 días</option><option value="7" selected>7 días</option><option value="15">15 días</option><option value="30">30 días</option></select></label>
+      <label>Estado<select id="quoteStatus"><option>Pendiente</option><option>Enviada</option><option>Aceptada</option><option>Rechazada</option></select></label>
+      <label>Descuento<input id="quoteDiscount" type="number" min="0" step="0.01" value="0" inputmode="decimal"></label>
+    </div></section>
+    <section class="card"><div class="section-head"><div><h3>Servicios cotizados</h3><p>La cotización no bloquea equipos ni aparta la fecha.</p></div><button type="button" id="addQuoteServiceBtn" class="btn btn-primary">+ Agregar</button></div><div id="quoteServicesList" class="services"></div></section>
+    <section class="card"><h3>Resumen</h3><div class="grid two"><label>Subtotal<input id="quoteSubtotal" readonly></label><label>Total estimado<input id="quoteTotal" readonly></label><label class="full">Notas<textarea id="quoteNotes" rows="3" placeholder="Condiciones especiales, traslado, promoción..."></textarea></label></div><div class="quote-warning">Esta cotización no reserva la fecha ni garantiza disponibilidad. La reserva se confirma únicamente al recibir el anticipo y generar el contrato.</div></section>
+    <div class="form-actions quote-actions"><button type="button" id="saveQuoteBtn" class="btn btn-blue">Guardar cotización</button><button type="submit" class="btn btn-primary">Generar cotización</button></div>
+  </form>
+  <section class="card"><div class="section-head"><div><h3>Cotizaciones guardadas</h3><p>Consulta, envía o convierte una cotización en contrato.</p></div></div><input id="searchQuotes" class="search" placeholder="Buscar por cliente, teléfono o folio"><div id="savedQuotes"></div></section>
+</section>
+
+<section id="contractsView" class="view"><section class="card"><div class="section-head"><div><span class="badge">Historial</span><h2>Contratos guardados</h2><p>La información se guarda en este dispositivo.</p></div><button id="clearAllBtn" class="btn btn-danger-light">Borrar todos</button></div><input id="searchContracts" class="search" placeholder="Buscar por cliente, teléfono o folio"><div id="savedContracts"></div></section></section>
+
+<section id="reportsView" class="view">
+  <section class="card">
+    <div class="section-head"><div><span class="badge">Finanzas</span><h2>Reportes mensuales</h2><p>Consulta contratos, cobros, gastos y ganancia real.</p></div></div>
+    <div class="grid two report-filters">
+      <label>Mes<select id="reportMonth"></select></label>
+      <label>Año<select id="reportYear"></select></label>
+    </div>
+  </section>
+  <div class="report-stats">
+    <article class="report-stat card"><span>Contratos</span><b id="reportContractsCount">0</b></article>
+    <article class="report-stat card"><span>Total vendido</span><b id="reportSales">$0</b></article>
+    <article class="report-stat card"><span>Cobrado</span><b id="reportCollected">$0</b></article>
+    <article class="report-stat card"><span>Saldo pendiente</span><b id="reportPending">$0</b></article>
+    <article class="report-stat card"><span>Gastos</span><b id="reportExpenses">$0</b></article>
+    <article class="report-stat card profit"><span>Ganancia real</span><b id="reportProfit">$0</b></article>
+  </div>
+  <section class="card">
+    <div class="section-head"><div><h3>Registrar gasto</h3><p>Gasolina, ayudantes, reparaciones, premios o mantenimiento.</p></div></div>
+    <form id="expenseForm" class="expense-form">
+      <label>Fecha<input id="expenseDate" type="date" required></label>
+      <label>Categoría<select id="expenseCategory"><option>Gasolina</option><option>Ayudantes</option><option>Reparación</option><option>Mantenimiento</option><option>Premios</option><option>Compra de equipo</option><option>Otro</option></select></label>
+      <label class="expense-description">Descripción<input id="expenseDescription" placeholder="Ej. Gasolina para entrega"></label>
+      <label>Monto<input id="expenseAmount" type="number" min="0.01" step="0.01" inputmode="decimal" required></label>
+      <button class="btn btn-primary" type="submit">Guardar gasto</button>
+    </form>
+    <div id="expensesList"></div>
+  </section>
+  <section class="card"><h3>Contratos del mes</h3><div id="monthlyContracts"></div></section>
+  <section class="card"><h3>Servicios más rentados</h3><div id="topServices"></div></section>
+</section>
+
+<section id="loyaltyView" class="view">
+  <section class="card hero"><div><span class="badge">Club Brinky</span><h2>Tarjeta de fidelidad digital</h2><p>Administra clientes, Estrellas Brinky, premios, QR y referidos.</p></div><div class="folio">⭐ <strong id="loyaltyClientCount">0</strong> clientes</div></section>
+  <section class="card"><div class="section-head"><div><h3>Configuración de recompensas</h3><p>Modifica las metas sin reprogramar la aplicación.</p></div></div><div class="grid two">
+    <label>Primera meta (Estrellas Brinky)<input id="reward1Stamps" type="number" min="1" value="4"></label><label>Premio<input id="reward1Name" value="50% de descuento"></label>
+    <label>Segunda meta (Estrellas Brinky)<input id="reward2Stamps" type="number" min="1" value="8"></label><label>Premio<input id="reward2Name" value="1 renta gratis"></label>
+  </div><button id="saveLoyaltySettings" class="btn btn-primary">Guardar configuración</button></section>
+  <section class="card"><div class="section-head"><div><h3>Registrar cliente</h3><p>El teléfono evita registros duplicados.</p></div></div><form id="loyaltyForm" class="grid two">
+    <label>Nombre completo<input id="loyaltyName" required></label><label>Teléfono / WhatsApp<input id="loyaltyPhone" required inputmode="tel"></label>
+    <label>Fecha de cumpleaños<input id="loyaltyBirthday" type="date"></label><label>Colonia / municipio<input id="loyaltyLocation" placeholder="Ej. Gran Santa Cruz, Umán"></label><label>Código de quien recomendó<input id="loyaltyReferrer" placeholder="Ej. BRK-0001"></label>
+    <label class="full">Notas<input id="loyaltyNotes" placeholder="Preferencias, colonia, festejado..."></label><button class="btn btn-primary" type="submit">Guardar cliente</button>
+  </form></section>
+  <section class="card"><div class="section-head"><div><h3>Clientes del Club</h3><p>Busca por nombre, teléfono o código.</p></div></div><input id="searchLoyalty" class="search" placeholder="Buscar cliente"><div id="loyaltyList"></div></section>
+</section>
+
+<section id="messagesView" class="view">
+  <section class="card hero"><div><span class="badge">Centro de mensajes</span><h2>WhatsApp del Club Brinky</h2><p>Revisa, edita y envía mensajes de bienvenida, actualización, premios y referidos.</p></div><div class="folio">🔔 <strong id="messagePendingCount">0</strong> pendientes</div></section>
+  <section class="card">
+    <div class="message-toolbar"><div class="message-tabs"><button id="showPendingMessages" class="btn btn-primary">Pendientes</button><button id="showSentMessages" class="btn btn-light">Enviados</button></div><button id="clearSentMessages" class="btn btn-danger-light">Limpiar enviados</button></div>
+    <div id="messageList"></div>
+  </section>
+</section>
+</main>
+<nav class="bottom-nav"><button data-go="home" class="active">⌂<span>Inicio</span></button><button data-go="new">＋<span>Contrato</span></button><button data-go="quotes">🧾<span>Cotizar</span></button><button data-go="contracts">▤<span>Contratos</span></button><button data-go="reports">▥<span>Reportes</span></button><button data-go="loyalty">⭐<span>Club</span></button><button data-go="messages">💬<span>Mensajes</span></button></nav>
+
+<template id="serviceTemplate"><div class="service-row"><label class="service-main">Servicio<select class="service-name" required><option value="" selected disabled>SELECCIONA UN SERVICIO</option><option>BRINCOLÍN CASTILLO ROSA 4 X 5 X 2.5</option><option>CASTILLO AZUL 4 X 5 X 2.5</option><option>ESCALADORA 3 X 6 X 3</option><option>TOBOGÁN ACUÁTICO 3 X 7 X 2.5</option><option>PISCINA INFLABLE 3 X 3</option><option>MOBILIARIO PASTEL INFANTIL (1 MESA / 10 SILLITAS)</option><option>FUTBOLITO DE MESA 3 PELOTAS</option><option>PAQ. 3 CABALLETES DOBLES + 6 SILLITAS</option><option>PAQ. 6 CABALLETES DOBLES + 12 SILLITAS</option><option>MAQUINITA PELUCHERA</option><option>PREMIOS 25</option><option>PREMIOS 30</option><option>PREMIOS 40</option><option>PREMIOS 50</option><option>OTRO</option></select><input class="service-custom hidden" placeholder="Escribe el servicio manualmente"><small class="service-status hidden"></small></label><label>Cantidad<input class="service-qty" type="number" value="1" min="1"></label><label>Tiempo<select class="service-duration"><option value="1">1 hora</option><option value="2">2 horas</option><option value="3">3 horas</option><option value="4" selected>4 horas</option><option value="5">5 horas</option><option value="6">6 horas</option><option value="8">8 horas</option><option value="12">Todo el día</option><option value="custom">Personalizado</option></select></label><label>Precio<input class="service-price" type="number" min="0" step=".01" value="0"></label><button type="button" class="remove-service" aria-label="Eliminar">×</button></div></template>
+<div id="quotePreviewModal" class="modal hidden"><div class="modal-content"><div class="modal-actions no-print"><button id="closeQuotePreview" class="btn btn-light">Cerrar</button><button id="convertQuoteBtn" class="btn btn-primary">Convertir en contrato</button><button id="shareQuote" class="btn btn-whatsapp">Enviar por WhatsApp</button><button id="downloadQuotePdf" class="btn btn-pink">Guardar PDF</button><button id="printQuote" class="btn btn-blue">Imprimir</button></div><article id="quotePreview" class="contract"></article></div></div>
+<div id="previewModal" class="modal hidden"><div class="modal-content"><div class="modal-actions no-print"><button id="closePreview" class="btn btn-light">Cerrar y nuevo</button><button id="shareContract" class="btn btn-whatsapp">Enviar por WhatsApp</button><button id="downloadPdf" class="btn btn-pink">Guardar PDF</button><button id="printContract" class="btn btn-blue">Imprimir</button></div><article id="contractPreview" class="contract"></article></div></div>
+
+<div id="loyaltyModal" class="modal hidden"><div class="modal-content loyalty-modal"><div class="modal-actions no-print"><button id="closeLoyaltyModal" class="btn btn-light">Cerrar</button><button id="shareLoyaltyWhatsApp" class="btn btn-whatsapp">Enviar tarjeta con QR</button><button id="downloadLoyaltyQr" class="btn btn-light">Descargar QR</button><button id="shareLoyaltyCard" class="btn btn-pink">Compartir tarjeta</button><button id="printLoyaltyCard" class="btn btn-blue">Imprimir tarjeta</button></div><article id="loyaltyCard" class="loyalty-card"></article><section class="card no-print"><h3>Movimientos</h3><div class="loyalty-controls"><button id="addStampBtn" class="btn btn-primary">+ Agregar Estrella</button><button id="removeStampBtn" class="btn btn-light">− Quitar Estrella</button><button id="redeemRewardBtn" class="btn btn-pink">🎁 Canjear premio</button></div><div id="loyaltyHistory"></div></section></div></div>
+
+<div id="messageEditModal" class="modal hidden"><div class="modal-content message-modal"><div class="modal-actions"><button id="closeMessageEdit" class="btn btn-light">Cerrar</button><button id="saveMessageEdit" class="btn btn-primary">Guardar cambios</button></div><section class="card"><h3>Editar mensaje</h3><p id="messageEditRecipient"></p><textarea id="messageEditText" rows="16"></textarea></section></div></div>
+<script src="app.js?v=51"></script>
+</body></html>
