@@ -1,46 +1,23 @@
-BRINKY SUITE PRO v7.1 DEV — EXPERIENCIA DE USUARIO
-
-ESTA ES UNA VERSIÓN DE PRUEBA. CONSERVA TU v7.0 COMO RESPALDO ESTABLE.
+BRINKY SUITE PRO v7.2 DEV — QR INTELIGENTE
 
 CAMBIOS
 
-1. CAPTURA MANUAL
-- Servicio conserva su lista desplegable.
-- Cantidad, Tiempo y Precio son campos manuales.
-- Se eliminaron flechas y opciones predefinidas.
-- ENTER y desplazamiento automático siguen funcionando.
-- También se aplica a Cotización.
+1. QR LEGIBLE
+- El QR contiene texto estructurado y reconocible:
+  Club Brinky Fiesta, código, socio, WhatsApp e identificador.
+- Cualquier lector puede mostrar o copiar la información.
+- Ya no depende de una aplicación externa para interpretar JSON.
 
-2. TARJETA DEL SOCIO
-- Mayor contraste.
-- Textos y paneles sólidos, sin transparencia que dificulte la lectura.
-- Barra visual de progreso de 0 a 8 estrellas.
-- Resumen claro de recompensas.
-- El QR se mantiene tanto en la vista previa como en la tarjeta PNG de WhatsApp.
-- Si el servicio de QR falla, la tarjeta muestra el código del socio como respaldo.
+2. LECTOR DENTRO DE BRINKY SUITE
+- Nuevo botón “Escanear tarjeta” en Club Brinky.
+- Usa la cámara trasera cuando el navegador admite BarcodeDetector.
+- Al reconocer el QR, abre automáticamente la ficha del socio.
+- Incluye búsqueda manual por código como respaldo.
 
-3. MENSAJE DE BIENVENIDA
-- Primera renta de un teléfono que aún no existe en Club Brinky:
-  mensaje de BIENVENIDA.
-- Rentas posteriores:
-  mensaje de ACTUALIZACIÓN o PREMIO.
+3. PROGRESO MÁS CLARO
+- Se eliminó “13% del ciclo”.
+- Ahora se muestra “1 de 8 estrellas”, “2 de 8 estrellas”, etc.
+- La barra visual de progreso se conserva.
 
-4. NUEVO SISTEMA DE RECOMPENSAS
-- 4 estrellas: 50% disponible.
-- Al usar el 50%, las estrellas NO se borran.
-- El descuento queda marcado como utilizado durante ese ciclo.
-- El socio continúa acumulando hasta 8.
-- 8 estrellas: renta gratis disponible.
-- Solo al canjear la renta gratis se reinician las estrellas a 0.
-- Al reiniciar, el 50% vuelve a estar disponible para el siguiente ciclo.
-
-5. BOTÓN RECOMPENSAS
-- Sustituye “Canjear premio”.
-- Muestra por separado el estado del 50% y la renta gratis.
-- Incluye historial de uso y canje.
-
-PRUEBAS RECOMENDADAS
-- Crear un socio desde su primera renta y comprobar mensaje de bienvenida.
-- Llevar un socio a 4 estrellas, usar el 50% y confirmar que conserva las 4.
-- Seguir hasta 8, canjear renta gratis y confirmar reinicio a 0.
-- Compartir tarjeta y confirmar que el PNG incluye QR y textos legibles.
+NOTA
+El lector automático requiere permiso de cámara y compatibilidad del navegador. La búsqueda manual siempre está disponible.

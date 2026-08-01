@@ -3,7 +3,7 @@ const form = $('contractForm');
 const servicesList = $('servicesList');
 const serviceTemplate = $('serviceTemplate');
 const STORAGE_KEY = 'brinky_contracts_v1';
-const APP_VERSION='7.1 DEV';
+const APP_VERSION='7.2 DEV';
 const QUOTES_KEY='brinky_quotes_v1';
 const EXPENSES_KEY='brinky_expenses_v1';
 const LOYALTY_KEY='brinky_loyalty_v1';
@@ -1238,7 +1238,22 @@ function memberSince(c){try{return new Date(c.createdAt||Date.now()).toLocaleDat
 function renderLoyalty(){if(!$('loyaltyList'))return;const s=getLoyaltySettings();$('reward1Stamps').value=s.r1;$('reward1Name').value=s.n1;$('reward2Stamps').value=s.r2;$('reward2Name').value=s.n2;const q=($('searchLoyalty')?.value||'').toLowerCase().trim(),items=getLoyalty().filter(c=>!q||[c.name,c.phone,c.code].some(v=>String(v||'').toLowerCase().includes(q)));$('loyaltyClientCount').textContent=getLoyalty().length;if($('statMembers'))$('statMembers').textContent=getLoyalty().length;$('loyaltyList').innerHTML=items.length?items.map(c=>{const r=rewardStatus(c);return `<div class="saved-item loyalty-item"><div><strong>${escapeHtml(c.name)}</strong><div class="saved-meta">${escapeHtml(c.code)} · ${escapeHtml(c.phone)} · ⭐ ${Number(c.stamps||0)} Estrellas Brinky · ${Number(c.totalRents||0)} rentas</div>${r?`<span class="reward-ready">🎁 ${escapeHtml(r.name)} disponible</span>`:''}</div><div class="saved-actions"><button class="btn btn-primary" onclick="openLoyalty('${c.id}')">Ver tarjeta</button><button class="btn btn-danger-light" onclick="deleteLoyalty('${c.id}')">Eliminar</button></div></div>`}).join(''):'<div class="empty">No hay clientes registrados en Club Brinky.</div>'}
 window.deleteLoyalty=id=>{if(confirm('¿Eliminar este cliente y su historial de fidelidad?'))setLoyalty(getLoyalty().filter(x=>x.id!==id))}
 function stampDots(stamps,target){let out='';for(let i=1;i<=target;i++)out+=`<span class="stamp-dot ${i<=stamps?'filled':''}">${i<=stamps?'★':'☆'}</span>`;return out}
-function qrPayload(c){return `BRINKY FIESTA CLUB | ${c.code} | ${c.name} | ${c.phone}`}
+function qrPayload(c){
+  return [
+    'CLUB BRINKY FIESTA',
+    `Código: ${c.code||''}`,
+    `Socio: ${c.name||''}`,
+    `WhatsApp: ${c.phone||''}`,
+    `Identificador: BRINKY-SOCIO:${c.code||''}`
+  ].join('\n');
+}
+function extractClubCodeFromQr(value=''){
+  const raw=String(value||'').trim();
+  const direct=raw.match(/\bBRK-\d+\b/i);
+  if(direct)return direct[0].toUpperCase();
+  const internal=raw.match(/BRINKY-SOCIO:([A-Z0-9-]+)/i);
+  return internal?internal[1].toUpperCase():'';
+}
 function qrUrl(c,size=500){return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(qrPayload(c))}`}
 window.openLoyalty=id=>{
   currentLoyaltyId=id;
@@ -1261,7 +1276,7 @@ window.openLoyalty=id=>{
     <div class="loyalty-progress">
       <b>${Number(c.stamps||0)} de ${s.r2} Estrellas Brinky</b>
       <div class="progress-track"><i style="width:${progress}%"></i></div>
-      <strong>${progress}% del ciclo</strong>
+      <strong>${Number(c.stamps||0)} de ${s.r2} estrellas</strong>
       <span>${r?'🎁 '+escapeHtml(r.name)+' disponible':'Próxima recompensa: '+escapeHtml(next.name)}</span>
     </div>
     <div class="reward-summary"><span>${discountLabel}</span><span>${freeLabel}</span></div>
@@ -1321,7 +1336,7 @@ async function makeLoyaltyCardBlob(c){
   g.fillStyle='#ffffff';g.font='bold 37px Arial';g.fillText(`${c.stamps} de ${s.r2} Estrellas Brinky`,540,545);
   g.fillStyle=a.star;g.font='58px Arial';g.fillText('★'.repeat(Math.min(Number(c.stamps||0),s.r2))+'☆'.repeat(Math.max(0,s.r2-Number(c.stamps||0))),540,610);
   round(150,632,780,20,10,'#d9e4dc');round(150,632,780*(progress/100),20,10,a.star);
-  g.fillStyle='#ffffff';g.font='bold 22px Arial';g.fillText(`${progress}% del ciclo`,540,662);
+  g.fillStyle='#ffffff';g.font='bold 22px Arial';g.fillText(`${Number(c.stamps||0)} de ${s.r2} estrellas`,540,662);
 
   try{
     const qrBlob=await fetchQrBlob(c);
@@ -1544,6 +1559,96 @@ $('searchMessages')?.addEventListener('input',renderMessages);
 $('clearSentMessages')?.addEventListener('click',()=>{if(confirm('¿Eliminar el historial de mensajes enviados?'))setMessages(getMessages().filter(m=>m.status!=='sent'))});
 updateMessageCounters();renderMessages();
 
+
+
+let qrScannerStream=null;
+let qrScannerTimer=null;
+let qrDetector=null;
+
+function findAndOpenLoyaltyByCode(code){
+  const normalized=String(code||'').trim().toUpperCase();
+  const member=getLoyalty().find(c=>String(c.code||'').toUpperCase()===normalized);
+  if(!member){
+    alert(`No se encontró ningún socio con el código ${normalized||'indicado'}.`);
+    return false;
+  }
+  stopQrScanner();
+  $('qrScannerModal')?.classList.add('hidden');
+  showView('loyalty');
+  setTimeout(()=>openLoyalty(member.id),100);
+  return true;
+}
+async function startQrScanner(){
+  if(!navigator.mediaDevices?.getUserMedia){
+    $('qrScannerSupport').textContent='Este dispositivo no permite usar la cámara desde la aplicación. Usa la búsqueda manual.';
+    return;
+  }
+  if(!('BarcodeDetector' in window)){
+    $('qrScannerSupport').textContent='El lector automático no está disponible en este navegador. Usa la búsqueda manual.';
+    return;
+  }
+  try{
+    qrDetector=new BarcodeDetector({formats:['qr_code']});
+    qrScannerStream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},
+      audio:false
+    });
+    const video=$('qrScannerVideo');
+    video.srcObject=qrScannerStream;
+    await video.play();
+    $('qrScannerSupport').textContent='Cámara activa. Mantén el QR dentro del recuadro.';
+    scanQrFrame();
+  }catch(error){
+    console.error(error);
+    $('qrScannerSupport').textContent='No se pudo abrir la cámara. Revisa los permisos o usa la búsqueda manual.';
+  }
+}
+async function scanQrFrame(){
+  if(!qrScannerStream||!qrDetector)return;
+  const video=$('qrScannerVideo');
+  if(video?.readyState>=2){
+    try{
+      const codes=await qrDetector.detect(video);
+      if(codes.length){
+        const code=extractClubCodeFromQr(codes[0].rawValue||'');
+        if(code&&findAndOpenLoyaltyByCode(code))return;
+        $('qrScannerSupport').textContent='El QR leído no corresponde a una Tarjeta Club Brinky.';
+      }
+    }catch(error){console.debug('Lectura QR:',error)}
+  }
+  qrScannerTimer=requestAnimationFrame(scanQrFrame);
+}
+function stopQrScanner(){
+  if(qrScannerTimer){cancelAnimationFrame(qrScannerTimer);qrScannerTimer=null}
+  if(qrScannerStream){
+    qrScannerStream.getTracks().forEach(track=>track.stop());
+    qrScannerStream=null;
+  }
+  const video=$('qrScannerVideo');
+  if(video)video.srcObject=null;
+}
+$('openQrScannerBtn')?.addEventListener('click',()=>{
+  $('manualQrCode').value='';
+  $('qrScannerSupport').textContent='Presiona “Iniciar cámara” o escribe el código manualmente.';
+  $('qrScannerModal').classList.remove('hidden');
+});
+$('closeQrScannerModal')?.addEventListener('click',()=>{
+  stopQrScanner();
+  $('qrScannerModal').classList.add('hidden');
+});
+$('startQrScanner')?.addEventListener('click',startQrScanner);
+$('stopQrScanner')?.addEventListener('click',stopQrScanner);
+$('searchManualQrCode')?.addEventListener('click',()=>{
+  const code=extractClubCodeFromQr($('manualQrCode')?.value||'');
+  if(!code){alert('Escribe un código válido, por ejemplo BRK-0003.');return}
+  findAndOpenLoyaltyByCode(code);
+});
+$('manualQrCode')?.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    $('searchManualQrCode')?.click();
+  }
+});
 
 // Productividad v6.3
 installEnterNavigation(form);

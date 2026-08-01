@@ -272,3 +272,40 @@ input:focus,select:focus,textarea:focus{
 .reward-manage-card.locked{
   opacity:.78;
 }
+
+
+/* Brinky Suite Pro v7.2 DEV · QR inteligente */
+.qr-scanner-modal{max-width:720px}
+.qr-scanner-video{
+  display:block;
+  width:100%;
+  min-height:260px;
+  max-height:58vh;
+  object-fit:cover;
+  margin:14px 0;
+  border-radius:16px;
+  background:#0a0f0c;
+  border:4px solid #1fa756;
+}
+.scanner-support{
+  padding:10px 12px;
+  margin-top:10px;
+  border-radius:10px;
+  background:#eef8f1;
+  color:#176d38;
+  font-weight:800;
+}
+.scanner-actions{display:flex;gap:10px;flex-wrap:wrap}
+.manual-qr-search{
+  margin-top:18px;
+  padding-top:16px;
+  border-top:1px solid #e1e6e3;
+}
+.inline-form{display:flex;gap:10px;align-items:stretch}
+.inline-form input{
+  flex:1;
+  text-transform:uppercase;
+  font-weight:800;
+  letter-spacing:.05em;
+}
+@media(max-width:560px){.inline-form{flex-direction:column}}

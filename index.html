@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#16a34a"><title>Brinky Suite Pro</title>
 <link rel="manifest" href="manifest.json"><link rel="icon" href="icons/icon-192.png?v=37"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=36">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Brinky Suite">
-<link rel="stylesheet" href="styles.css?v=71">
+<link rel="stylesheet" href="styles.css?v=72">
 </head>
 <body>
 <header class="topbar">
@@ -15,7 +15,7 @@
 </header>
 <main>
 <section id="homeView" class="view active">
-  <div class="welcome card"><div><span class="badge">Versión 7.1 DEV · Experiencia de usuario</span><h2>Bienvenido</h2><p>Administra tus contratos desde el smartphone.</p></div><img src="icons/icon-192.png?v=37" alt="Brinky"></div>
+  <div class="welcome card"><div><span class="badge">Versión 7.2 DEV · QR inteligente</span><h2>Bienvenido</h2><p>Administra tus contratos desde el smartphone.</p></div><img src="icons/icon-192.png?v=37" alt="Brinky"></div>
   <div class="stats">
     <article class="stat card"><b id="statContracts">0</b><span>Contratos guardados</span></article>
     <article class="stat card"><b id="statUpcoming">0</b><span>Próximos eventos</span></article>
@@ -140,7 +140,7 @@
   <section class="card"><div class="section-head"><div><h3>Configuración de recompensas</h3><p>Modifica las metas sin reprogramar la aplicación.</p></div></div><div class="grid two">
     <label>Primera meta (Estrellas Brinky)<input id="reward1Stamps" type="number" min="1" value="4"></label><label>Premio<input id="reward1Name" value="50% de descuento"></label>
     <label>Segunda meta (Estrellas Brinky)<input id="reward2Stamps" type="number" min="1" value="8"></label><label>Premio<input id="reward2Name" value="1 renta gratis"></label>
-  </div><button id="saveLoyaltySettings" class="btn btn-primary">Guardar configuración</button></section>
+  </div><button id="saveLoyaltySettings" class="btn btn-primary">Guardar configuración</button><button id="openQrScannerBtn" type="button" class="btn btn-blue">📷 Escanear tarjeta</button></section>
 
   <section class="card"><div class="section-head"><div><h3>Registrar socio</h3><p>El teléfono evita registros duplicados.</p></div></div><form id="loyaltyForm" class="grid two">
     <label>Nombre completo<input id="loyaltyName" required></label><label>Teléfono / WhatsApp<input id="loyaltyPhone" required inputmode="tel"></label>
@@ -234,6 +234,30 @@
 <div id="loyaltyModal" class="modal hidden"><div class="modal-content loyalty-modal"><div class="modal-actions no-print"><button id="closeLoyaltyModal" class="btn btn-light">Cerrar</button><button id="shareLoyaltyWhatsApp" class="btn btn-whatsapp">Enviar tarjeta con QR</button><button id="downloadLoyaltyQr" class="btn btn-light">Descargar QR</button><button id="shareLoyaltyCard" class="btn btn-pink">Compartir tarjeta</button><button id="printLoyaltyCard" class="btn btn-blue">Imprimir tarjeta</button></div><article id="loyaltyCard" class="loyalty-card"></article><section class="card no-print"><h3>Movimientos</h3><div class="loyalty-controls"><button id="addStampBtn" class="btn btn-primary">+ Agregar Estrella</button><button id="removeStampBtn" class="btn btn-light">− Quitar Estrella</button><button id="manageRewardsBtn" class="btn btn-pink">🎁 Recompensas</button></div><div id="loyaltyHistory"></div></section></div></div>
 
 
+
+<div id="qrScannerModal" class="modal hidden"><div class="modal-content qr-scanner-modal">
+  <div class="modal-actions"><button id="closeQrScannerModal" class="btn btn-light">Cerrar</button></div>
+  <section class="card">
+    <span class="badge">Club Brinky</span>
+    <h2>📷 Escanear tarjeta de socio</h2>
+    <p>Apunta la cámara al QR para abrir automáticamente la ficha del socio.</p>
+    <div id="qrScannerSupport" class="scanner-support"></div>
+    <video id="qrScannerVideo" class="qr-scanner-video" playsinline muted></video>
+    <div class="scanner-actions">
+      <button id="startQrScanner" type="button" class="btn btn-primary">Iniciar cámara</button>
+      <button id="stopQrScanner" type="button" class="btn btn-light">Detener</button>
+    </div>
+    <div class="manual-qr-search">
+      <h3>Búsqueda manual</h3>
+      <p>También puedes escribir el código que aparece en la tarjeta.</p>
+      <div class="inline-form">
+        <input id="manualQrCode" placeholder="Ej. BRK-0003" autocomplete="off">
+        <button id="searchManualQrCode" type="button" class="btn btn-blue">Buscar socio</button>
+      </div>
+    </div>
+  </section>
+</div></div>
+
 <div id="rewardsModal" class="modal hidden"><div class="modal-content rewards-modal">
   <div class="modal-actions"><button id="closeRewardsModal" class="btn btn-light">Cerrar</button></div>
   <section class="card">
@@ -246,5 +270,5 @@
 
 <div id="messageModal" class="modal hidden"><div class="modal-content message-modal"><div class="modal-actions"><button id="closeMessageModal" class="btn btn-light">Cerrar</button><button id="saveMessageEdit" class="btn btn-blue">Guardar cambios</button><button id="sendMessageWhatsApp" class="btn btn-whatsapp">Compartir tarjeta y mensaje</button></div><section class="card"><span id="messageTypeBadge" class="badge"></span><h3 id="messageClientName"></h3><p id="messageClientPhone" class="saved-meta"></p><label>Mensaje<textarea id="messageEditor" rows="14"></textarea></label><p class="field-help">En celulares compatibles se abrirá el menú para compartir la tarjeta PNG junto con el mensaje. Si el navegador no lo permite, la tarjeta se descargará y WhatsApp se abrirá con el texto preparado.</p></section></div></div>
 
-<script src="app.js?v=71"></script>
+<script src="app.js?v=72"></script>
 </body></html>
