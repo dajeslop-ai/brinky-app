@@ -3,7 +3,7 @@ const form = $('contractForm');
 const servicesList = $('servicesList');
 const serviceTemplate = $('serviceTemplate');
 const STORAGE_KEY = 'brinky_contracts_v1';
-const APP_VERSION='7.2 DEV';
+const APP_VERSION='7.3 DEV';
 const QUOTES_KEY='brinky_quotes_v1';
 const EXPENSES_KEY='brinky_expenses_v1';
 const LOYALTY_KEY='brinky_loyalty_v1';
@@ -811,7 +811,10 @@ function showView(name){
   if(name==='new')setTimeout(()=>focusAndSelect($('clientName')),80);
   if(name==='quotes')renderQuotes();
   if(name==='reports')renderReports();
-  if(name==='loyalty')renderLoyalty();
+  if(name==='loyalty'){
+    renderLoyalty();
+    setTimeout(()=>focusAndSelect($('clubQuickSearch')),80);
+  }
   if(name==='messages')renderMessages();
   window.scrollTo(0,0);
 }
@@ -1241,18 +1244,23 @@ function stampDots(stamps,target){let out='';for(let i=1;i<=target;i++)out+=`<sp
 function qrPayload(c){
   return [
     'CLUB BRINKY FIESTA',
+    `ID-SOCIO: ${c.id||''}`,
     `Código: ${c.code||''}`,
     `Socio: ${c.name||''}`,
     `WhatsApp: ${c.phone||''}`,
-    `Identificador: BRINKY-SOCIO:${c.code||''}`
+    `TEL-NORMALIZADO: ${normalizedPhone(c.phone||'')}`
   ].join('\n');
 }
-function extractClubCodeFromQr(value=''){
+function extractClubIdentityFromQr(value=''){
   const raw=String(value||'').trim();
-  const direct=raw.match(/\bBRK-\d+\b/i);
-  if(direct)return direct[0].toUpperCase();
-  const internal=raw.match(/BRINKY-SOCIO:([A-Z0-9-]+)/i);
-  return internal?internal[1].toUpperCase():'';
+  const idMatch=raw.match(/ID-SOCIO:\s*([^\n\r]+)/i);
+  const codeMatch=raw.match(/\bBRK-\d+\b/i);
+  const phoneMatch=raw.match(/TEL-NORMALIZADO:\s*(\d{7,10})/i);
+  return {
+    id:idMatch?idMatch[1].trim():'',
+    code:codeMatch?codeMatch[0].toUpperCase():'',
+    phone:phoneMatch?phoneMatch[1]:''
+  };
 }
 function qrUrl(c,size=500){return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(qrPayload(c))}`}
 window.openLoyalty=id=>{
@@ -1561,22 +1569,121 @@ updateMessageCounters();renderMessages();
 
 
 
+
+function loyaltyDuplicateCodes(){
+  const groups={};
+  getLoyalty().forEach(c=>{
+    const code=String(c.code||'').trim().toUpperCase();
+    if(!code)return;
+    (groups[code]||(groups[code]=[])).push(c);
+  });
+  return Object.entries(groups).filter(([,items])=>items.length>1);
+}
+function warnDuplicateLoyaltyCodes(){
+  const duplicates=loyaltyDuplicateCodes();
+  if(!duplicates.length)return;
+  const detail=duplicates.map(([code,items])=>`${code}: ${items.map(x=>x.name).join(', ')}`).join('\n');
+  console.warn('Códigos Club Brinky repetidos:\n'+detail);
+}
+
+
+function loyaltySearchText(c){
+  return [
+    c.name||'',
+    c.phone||'',
+    c.code||''
+  ].join(' ').toLowerCase();
+}
+function renderClubQuickResults(){
+  const input=$('clubQuickSearch');
+  const box=$('clubQuickResults');
+  if(!input||!box)return;
+  const term=input.value.trim().toLowerCase();
+
+  if(!term){
+    box.innerHTML='';
+    box.classList.add('hidden');
+    return;
+  }
+
+  const results=getLoyalty()
+    .filter(c=>loyaltySearchText(c).includes(term))
+    .slice(0,8);
+
+  if(!results.length){
+    box.innerHTML='<div class="club-quick-empty">No se encontró ningún socio.</div>';
+    box.classList.remove('hidden');
+    return;
+  }
+
+  box.innerHTML=results.map(c=>`
+    <button type="button" class="club-quick-result" data-open-quick-member="${escapeHtml(c.id)}">
+      <span class="club-quick-avatar">👤</span>
+      <span class="club-quick-info">
+        <strong>${escapeHtml(c.name)}</strong>
+        <small>${escapeHtml(c.code)} · ${escapeHtml(c.phone||'Sin teléfono')}</small>
+      </span>
+      <span class="club-quick-stars">⭐ ${Number(c.stamps||0)}</span>
+    </button>
+  `).join('');
+
+  box.classList.remove('hidden');
+
+  box.querySelectorAll('[data-open-quick-member]').forEach(btn=>btn.addEventListener('click',()=>{
+    const id=btn.dataset.openQuickMember;
+    input.value='';
+    box.innerHTML='';
+    box.classList.add('hidden');
+    openLoyalty(id);
+  }));
+}
+function openClubScannerFromMain(){
+  $('manualQrCode').value='';
+  $('qrScannerSupport').textContent='Presiona “Iniciar cámara” o escribe el código manualmente.';
+  $('qrScannerModal').classList.remove('hidden');
+}
+
 let qrScannerStream=null;
 let qrScannerTimer=null;
 let qrDetector=null;
 
-function findAndOpenLoyaltyByCode(code){
-  const normalized=String(code||'').trim().toUpperCase();
-  const member=getLoyalty().find(c=>String(c.code||'').toUpperCase()===normalized);
-  if(!member){
-    alert(`No se encontró ningún socio con el código ${normalized||'indicado'}.`);
-    return false;
-  }
+function openScannedLoyaltyMember(member){
+  if(!member)return false;
   stopQrScanner();
   $('qrScannerModal')?.classList.add('hidden');
   showView('loyalty');
   setTimeout(()=>openLoyalty(member.id),100);
   return true;
+}
+function findAndOpenLoyaltyByIdentity(identity){
+  const members=getLoyalty();
+  const data=typeof identity==='string'
+    ? {id:'',code:String(identity||'').trim().toUpperCase(),phone:''}
+    : (identity||{id:'',code:'',phone:''});
+
+  if(data.id){
+    const byId=members.find(c=>String(c.id||'')===String(data.id));
+    if(byId)return openScannedLoyaltyMember(byId);
+  }
+
+  let matches=data.code
+    ? members.filter(c=>String(c.code||'').toUpperCase()===String(data.code).toUpperCase())
+    : [];
+
+  if(data.phone&&matches.length>1){
+    const byPhone=matches.find(c=>normalizedPhone(c.phone)===normalizedPhone(data.phone));
+    if(byPhone)return openScannedLoyaltyMember(byPhone);
+  }
+
+  if(matches.length===1)return openScannedLoyaltyMember(matches[0]);
+
+  if(matches.length>1){
+    alert(`Hay ${matches.length} socios con el código ${data.code}. Esta tarjeta antigua no permite identificar con seguridad al propietario. Busca al socio por nombre o teléfono y vuelve a generar su tarjeta.`);
+    return false;
+  }
+
+  alert('No se encontró ningún socio con los datos de esta tarjeta.');
+  return false;
 }
 async function startQrScanner(){
   if(!navigator.mediaDevices?.getUserMedia){
@@ -1610,8 +1717,8 @@ async function scanQrFrame(){
     try{
       const codes=await qrDetector.detect(video);
       if(codes.length){
-        const code=extractClubCodeFromQr(codes[0].rawValue||'');
-        if(code&&findAndOpenLoyaltyByCode(code))return;
+        const identity=extractClubIdentityFromQr(codes[0].rawValue||'');
+        if((identity.id||identity.code)&&findAndOpenLoyaltyByIdentity(identity))return;
         $('qrScannerSupport').textContent='El QR leído no corresponde a una Tarjeta Club Brinky.';
       }
     }catch(error){console.debug('Lectura QR:',error)}
@@ -1627,10 +1734,13 @@ function stopQrScanner(){
   const video=$('qrScannerVideo');
   if(video)video.srcObject=null;
 }
-$('openQrScannerBtn')?.addEventListener('click',()=>{
-  $('manualQrCode').value='';
-  $('qrScannerSupport').textContent='Presiona “Iniciar cámara” o escribe el código manualmente.';
-  $('qrScannerModal').classList.remove('hidden');
+$('clubScanMainBtn')?.addEventListener('click',openClubScannerFromMain);
+$('clubQuickSearch')?.addEventListener('input',renderClubQuickResults);
+$('clubQuickSearch')?.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    e.target.value='';
+    renderClubQuickResults();
+  }
 });
 $('closeQrScannerModal')?.addEventListener('click',()=>{
   stopQrScanner();
@@ -1639,9 +1749,9 @@ $('closeQrScannerModal')?.addEventListener('click',()=>{
 $('startQrScanner')?.addEventListener('click',startQrScanner);
 $('stopQrScanner')?.addEventListener('click',stopQrScanner);
 $('searchManualQrCode')?.addEventListener('click',()=>{
-  const code=extractClubCodeFromQr($('manualQrCode')?.value||'');
-  if(!code){alert('Escribe un código válido, por ejemplo BRK-0003.');return}
-  findAndOpenLoyaltyByCode(code);
+  const identity=extractClubIdentityFromQr($('manualQrCode')?.value||'');
+  if(!identity.code){alert('Escribe un código válido, por ejemplo BRK-0003.');return}
+  findAndOpenLoyaltyByIdentity(identity);
 });
 $('manualQrCode')?.addEventListener('keydown',e=>{
   if(e.key==='Enter'){
@@ -1649,6 +1759,8 @@ $('manualQrCode')?.addEventListener('keydown',e=>{
     $('searchManualQrCode')?.click();
   }
 });
+
+warnDuplicateLoyaltyCodes();
 
 // Productividad v6.3
 installEnterNavigation(form);

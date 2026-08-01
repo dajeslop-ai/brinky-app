@@ -1,23 +1,31 @@
-BRINKY SUITE PRO v7.2 DEV — QR INTELIGENTE
+BRINKY SUITE PRO v7.3 DEV — CENTRO DE ATENCIÓN DE SOCIOS
 
 CAMBIOS
 
-1. QR LEGIBLE
-- El QR contiene texto estructurado y reconocible:
-  Club Brinky Fiesta, código, socio, WhatsApp e identificador.
-- Cualquier lector puede mostrar o copiar la información.
-- Ya no depende de una aplicación externa para interpretar JSON.
+1. CENTRO DE ATENCIÓN AL INICIO DE CLUB
+- Nuevo bloque superior “Atención rápida de socios”.
+- Aparece antes de configuraciones, registros y lista completa.
 
-2. LECTOR DENTRO DE BRINKY SUITE
-- Nuevo botón “Escanear tarjeta” en Club Brinky.
-- Usa la cámara trasera cuando el navegador admite BarcodeDetector.
-- Al reconocer el QR, abre automáticamente la ficha del socio.
-- Incluye búsqueda manual por código como respaldo.
+2. BUSCADOR SIEMPRE VISIBLE
+- Busca mientras escribes por:
+  • nombre;
+  • teléfono;
+  • código BRK.
+- Muestra resultados rápidos con nombre, código, teléfono y estrellas.
+- Al tocar un resultado abre directamente la ficha del socio.
 
-3. PROGRESO MÁS CLARO
-- Se eliminó “13% del ciclo”.
-- Ahora se muestra “1 de 8 estrellas”, “2 de 8 estrellas”, etc.
-- La barra visual de progreso se conserva.
+3. BOTÓN PRINCIPAL DE ESCANEO
+- Botón grande “Escanear tarjeta de socio”.
+- Abre el mismo lector QR corregido de la v7.2.1.
+- Conserva búsqueda manual por código como respaldo.
 
-NOTA
-El lector automático requiere permiso de cámara y compatibilidad del navegador. La búsqueda manual siempre está disponible.
+4. ORGANIZACIÓN
+- Se eliminó el botón pequeño de escaneo de Configuración.
+- La lista “Socios Club” y la personalización permanecen más abajo.
+
+Esta versión conserva:
+- QR con ID interno único;
+- control de códigos duplicados;
+- sistema de recompensas;
+- tarjeta y WhatsApp;
+- contratos, cotizaciones y reportes.

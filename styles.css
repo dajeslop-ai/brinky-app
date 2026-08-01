@@ -309,3 +309,131 @@ input:focus,select:focus,textarea:focus{
   letter-spacing:.05em;
 }
 @media(max-width:560px){.inline-form{flex-direction:column}}
+
+
+/* Brinky Suite Pro v7.3 DEV · Centro de atención de socios */
+.club-service-center{
+  margin-bottom:18px;
+  border:2px solid #bfe9cf;
+  background:linear-gradient(180deg,#f8fff9,#ffffff);
+}
+.club-search-wrap{
+  position:relative;
+  display:flex;
+  align-items:center;
+  margin-top:12px;
+}
+.club-search-icon{
+  position:absolute;
+  left:15px;
+  font-size:1.15rem;
+  pointer-events:none;
+}
+.club-quick-search{
+  width:100%;
+  min-height:52px;
+  padding:12px 15px 12px 48px;
+  border:2px solid #dce6df;
+  border-radius:15px;
+  font-size:1rem;
+  font-weight:700;
+  background:#fff;
+}
+.club-quick-search:focus{
+  border-color:#1da753;
+  box-shadow:0 0 0 4px rgba(29,167,83,.12);
+}
+.club-quick-results{
+  display:grid;
+  gap:8px;
+  margin-top:10px;
+  padding:10px;
+  border:1px solid #dfe7e1;
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 12px 30px rgba(20,60,35,.10);
+}
+.club-quick-results.hidden{display:none}
+.club-quick-result{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:11px;
+  padding:11px 12px;
+  border:1px solid #e4e9e5;
+  border-radius:12px;
+  background:#fff;
+  text-align:left;
+  cursor:pointer;
+}
+.club-quick-result:hover,
+.club-quick-result:focus{
+  border-color:#56c67d;
+  background:#f2fff6;
+}
+.club-quick-avatar{
+  display:grid;
+  place-items:center;
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  background:#e9f9ef;
+}
+.club-quick-info{
+  display:grid;
+  gap:3px;
+  min-width:0;
+  flex:1;
+}
+.club-quick-info strong,
+.club-quick-info small{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.club-quick-info small{color:#66736b}
+.club-quick-stars{
+  white-space:nowrap;
+  font-weight:900;
+  color:#8b6800;
+}
+.club-quick-empty{
+  padding:13px;
+  text-align:center;
+  color:#6a746e;
+}
+.club-scan-main{
+  width:100%;
+  min-height:78px;
+  margin-top:14px;
+  padding:15px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  border:0;
+  border-radius:18px;
+  background:linear-gradient(135deg,#0d9d49,#087436);
+  color:#fff;
+  box-shadow:0 12px 24px rgba(10,126,58,.22);
+  cursor:pointer;
+}
+.club-scan-main-icon{font-size:2rem}
+.club-scan-main span:last-child{
+  display:grid;
+  gap:3px;
+  text-align:left;
+}
+.club-scan-main strong{
+  font-size:1rem;
+  letter-spacing:.02em;
+}
+.club-scan-main small{
+  color:rgba(255,255,255,.88);
+}
+.club-scan-main:active{transform:translateY(1px)}
+@media(max-width:560px){
+  .club-scan-main{
+    justify-content:flex-start;
+  }
+}
