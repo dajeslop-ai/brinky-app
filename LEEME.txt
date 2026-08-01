@@ -1,42 +1,46 @@
-BRINKY SUITE PRO v7.0 — SMART ASSISTANT
+BRINKY SUITE PRO v7.1 DEV — EXPERIENCIA DE USUARIO
 
-CAMBIOS MATERIALIZADOS
+ESTA ES UNA VERSIÓN DE PRUEBA. CONSERVA TU v7.0 COMO RESPALDO ESTABLE.
 
-1. INICIO
-- “Total contratado” fue reemplazado por “Próximo evento”.
-- Muestra fecha u HOY, hora, cliente y primer servicio.
-- Ignora contratos ya realizados.
-- Si no hay eventos, informa “Sin eventos”.
+CAMBIOS
 
-2. CAPTURA RÁPIDA
-- ENTER y SHIFT + ENTER conservan su funcionamiento.
-- La pantalla ahora se desplaza automáticamente y centra el siguiente campo.
-- Funciona en Nuevo contrato y Cotización.
+1. CAPTURA MANUAL
+- Servicio conserva su lista desplegable.
+- Cantidad, Tiempo y Precio son campos manuales.
+- Se eliminaron flechas y opciones predefinidas.
+- ENTER y desplazamiento automático siguen funcionando.
+- También se aplica a Cotización.
 
-3. MENSAJE PROMOCIONAL DEL PDF
-- Nuevo editor dentro de la ventana de contratos.
-- Permite modificar el texto que aparece junto a Facebook al final del contrato.
-- Incluye vista previa, guardar y restaurar.
-- El texto guardado se usa en vista previa, PDF y WhatsApp.
+2. TARJETA DEL SOCIO
+- Mayor contraste.
+- Textos y paneles sólidos, sin transparencia que dificulte la lectura.
+- Barra visual de progreso de 0 a 8 estrellas.
+- Resumen claro de recompensas.
+- El QR se mantiene tanto en la vista previa como en la tarjeta PNG de WhatsApp.
+- Si el servicio de QR falla, la tarjeta muestra el código del socio como respaldo.
 
-4. CONTRATOS UNIFICADOS
-- Nuevo contrato y Contratos guardados están en una sola ventana.
-- Contratos guardados aparece al final.
-- El acceso “Contratos” abre la misma ventana y baja automáticamente al historial.
+3. MENSAJE DE BIENVENIDA
+- Primera renta de un teléfono que aún no existe en Club Brinky:
+  mensaje de BIENVENIDA.
+- Rentas posteriores:
+  mensaje de ACTUALIZACIÓN o PREMIO.
 
-5. TERMINOLOGÍA CLUB BRINKY
-- “Clientes” fue cambiado por “Socios”.
-- “Clientes del Club” ahora es “Socios Club”.
-- El contador superior muestra socios.
+4. NUEVO SISTEMA DE RECOMPENSAS
+- 4 estrellas: 50% disponible.
+- Al usar el 50%, las estrellas NO se borran.
+- El descuento queda marcado como utilizado durante ese ciclo.
+- El socio continúa acumulando hasta 8.
+- 8 estrellas: renta gratis disponible.
+- Solo al canjear la renta gratis se reinician las estrellas a 0.
+- Al reiniciar, el 50% vuelve a estar disponible para el siguiente ciclo.
 
-6. PERSONALIZACIÓN DE TARJETA
-- “Personalización Club Brinky” ahora es “Personalización de Tarjeta Socio”.
-- Fue movida al final de la ventana Club, después de Socios Club.
-- Conserva colores, fondos, estilos y vista previa.
+5. BOTÓN RECOMPENSAS
+- Sustituye “Canjear premio”.
+- Muestra por separado el estado del 50% y la renta gratis.
+- Incluye historial de uso y canje.
 
-7. PLANTILLAS DE WHATSAPP
-- Fueron retiradas de Club.
-- Ahora aparecen al final de la ventana Mensajes, después de la Bandeja de mensajes.
-- Conservan edición, vista previa, Facebook editable y restauración.
-
-Se mantienen las reglas de referidos, reportes liquidados, captura rápida y demás funciones de la v6.5.
+PRUEBAS RECOMENDADAS
+- Crear un socio desde su primera renta y comprobar mensaje de bienvenida.
+- Llevar un socio a 4 estrellas, usar el 50% y confirmar que conserva las 4.
+- Seguir hasta 8, canjear renta gratis y confirmar reinicio a 0.
+- Compartir tarjeta y confirmar que el PNG incluye QR y textos legibles.

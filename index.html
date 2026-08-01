@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#16a34a"><title>Brinky Suite Pro</title>
 <link rel="manifest" href="manifest.json"><link rel="icon" href="icons/icon-192.png?v=37"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=36">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Brinky Suite">
-<link rel="stylesheet" href="styles.css?v=70">
+<link rel="stylesheet" href="styles.css?v=71">
 </head>
 <body>
 <header class="topbar">
@@ -15,7 +15,7 @@
 </header>
 <main>
 <section id="homeView" class="view active">
-  <div class="welcome card"><div><span class="badge">Versión 7.0 · Smart Assistant</span><h2>Bienvenido</h2><p>Administra tus contratos desde el smartphone.</p></div><img src="icons/icon-192.png?v=37" alt="Brinky"></div>
+  <div class="welcome card"><div><span class="badge">Versión 7.1 DEV · Experiencia de usuario</span><h2>Bienvenido</h2><p>Administra tus contratos desde el smartphone.</p></div><img src="icons/icon-192.png?v=37" alt="Brinky"></div>
   <div class="stats">
     <article class="stat card"><b id="statContracts">0</b><span>Contratos guardados</span></article>
     <article class="stat card"><b id="statUpcoming">0</b><span>Próximos eventos</span></article>
@@ -227,13 +227,24 @@
 
 <nav class="bottom-nav"><button data-go="home" class="active">⌂<span>Inicio</span></button><button data-go="quotes">🧾<span>Cotizar</span></button><button data-go="new">＋<span>Nuevo</span></button><button data-go="contracts">▤<span>Contratos</span></button><button data-go="loyalty">⭐<span>Club</span></button><button data-go="messages">💬<span>Mensajes</span><i id="navMessageBadge" class="nav-badge hidden">0</i></button><button data-go="reports">▥<span>Reportes</span></button></nav>
 
-<template id="serviceTemplate"><div class="service-row"><label class="service-main">Servicio<select class="service-name" required><option value="" selected disabled>SELECCIONA UN SERVICIO</option><option>BRINCOLÍN CASTILLO ROSA 4 X 5 X 2.5</option><option>CASTILLO AZUL 4 X 5 X 2.5</option><option>ESCALADORA 3 X 6 X 3</option><option>TOBOGÁN ACUÁTICO 3 X 7 X 2.5</option><option>PISCINA INFLABLE 3 X 3</option><option>MOBILIARIO PASTEL INFANTIL (1 MESA / 10 SILLITAS)</option><option>FUTBOLITO DE MESA 3 PELOTAS</option><option>PAQ. 3 CABALLETES DOBLES + 6 SILLITAS</option><option>PAQ. 6 CABALLETES DOBLES + 12 SILLITAS</option><option>MAQUINITA PELUCHERA</option><option>PREMIOS 25</option><option>PREMIOS 30</option><option>PREMIOS 40</option><option>PREMIOS 50</option><option>OTRO</option></select><input class="service-custom hidden" placeholder="Escribe el servicio manualmente"><small class="service-status hidden"></small></label><label>Cantidad<input class="service-qty" type="number" value="1" min="1"></label><label>Tiempo<select class="service-duration"><option value="1">1 hora</option><option value="2">2 horas</option><option value="3">3 horas</option><option value="4" selected>4 horas</option><option value="5">5 horas</option><option value="6">6 horas</option><option value="8">8 horas</option><option value="12">Todo el día</option><option value="custom">Personalizado</option></select></label><label>Precio<input class="service-price" type="number" min="0" step=".01" value="0"></label><button type="button" class="remove-service" aria-label="Eliminar">×</button></div></template>
+<template id="serviceTemplate"><div class="service-row"><label class="service-main">Servicio<select class="service-name" required><option value="" selected disabled>SELECCIONA UN SERVICIO</option><option>BRINCOLÍN CASTILLO ROSA 4 X 5 X 2.5</option><option>CASTILLO AZUL 4 X 5 X 2.5</option><option>ESCALADORA 3 X 6 X 3</option><option>TOBOGÁN ACUÁTICO 3 X 7 X 2.5</option><option>PISCINA INFLABLE 3 X 3</option><option>MOBILIARIO PASTEL INFANTIL (1 MESA / 10 SILLITAS)</option><option>FUTBOLITO DE MESA 3 PELOTAS</option><option>PAQ. 3 CABALLETES DOBLES + 6 SILLITAS</option><option>PAQ. 6 CABALLETES DOBLES + 12 SILLITAS</option><option>MAQUINITA PELUCHERA</option><option>PREMIOS 25</option><option>PREMIOS 30</option><option>PREMIOS 40</option><option>PREMIOS 50</option><option>OTRO</option></select><input class="service-custom hidden" placeholder="Escribe el servicio manualmente"><small class="service-status hidden"></small></label><label>Cantidad<input class="service-qty manual-number" type="text" inputmode="decimal" value="1" placeholder="Ej. 1"></label><label>Tiempo<input class="service-duration manual-number" type="text" inputmode="decimal" value="4" placeholder="Ej. 4 horas"></label><label>Precio<input class="service-price manual-number" type="text" inputmode="decimal" value="0" placeholder="Ej. 1200"></label><button type="button" class="remove-service" aria-label="Eliminar">×</button></div></template>
 <div id="quotePreviewModal" class="modal hidden"><div class="modal-content"><div class="modal-actions no-print"><button id="closeQuotePreview" class="btn btn-light">Cerrar</button><button id="convertQuoteBtn" class="btn btn-primary">Convertir en contrato</button><button id="shareQuote" class="btn btn-whatsapp">Enviar por WhatsApp</button><button id="downloadQuotePdf" class="btn btn-pink">Guardar PDF</button><button id="printQuote" class="btn btn-blue">Imprimir</button></div><article id="quotePreview" class="contract"></article></div></div>
 <div id="previewModal" class="modal hidden"><div class="modal-content"><div class="modal-actions no-print"><button id="closePreview" class="btn btn-light">Cerrar y nuevo</button><button id="shareContract" class="btn btn-whatsapp">Enviar por WhatsApp</button><button id="downloadPdf" class="btn btn-pink">Guardar PDF</button><button id="printContract" class="btn btn-blue">Imprimir</button></div><article id="contractPreview" class="contract"></article></div></div>
 
-<div id="loyaltyModal" class="modal hidden"><div class="modal-content loyalty-modal"><div class="modal-actions no-print"><button id="closeLoyaltyModal" class="btn btn-light">Cerrar</button><button id="shareLoyaltyWhatsApp" class="btn btn-whatsapp">Enviar tarjeta con QR</button><button id="downloadLoyaltyQr" class="btn btn-light">Descargar QR</button><button id="shareLoyaltyCard" class="btn btn-pink">Compartir tarjeta</button><button id="printLoyaltyCard" class="btn btn-blue">Imprimir tarjeta</button></div><article id="loyaltyCard" class="loyalty-card"></article><section class="card no-print"><h3>Movimientos</h3><div class="loyalty-controls"><button id="addStampBtn" class="btn btn-primary">+ Agregar Estrella</button><button id="removeStampBtn" class="btn btn-light">− Quitar Estrella</button><button id="redeemRewardBtn" class="btn btn-pink">🎁 Canjear premio</button></div><div id="loyaltyHistory"></div></section></div></div>
+<div id="loyaltyModal" class="modal hidden"><div class="modal-content loyalty-modal"><div class="modal-actions no-print"><button id="closeLoyaltyModal" class="btn btn-light">Cerrar</button><button id="shareLoyaltyWhatsApp" class="btn btn-whatsapp">Enviar tarjeta con QR</button><button id="downloadLoyaltyQr" class="btn btn-light">Descargar QR</button><button id="shareLoyaltyCard" class="btn btn-pink">Compartir tarjeta</button><button id="printLoyaltyCard" class="btn btn-blue">Imprimir tarjeta</button></div><article id="loyaltyCard" class="loyalty-card"></article><section class="card no-print"><h3>Movimientos</h3><div class="loyalty-controls"><button id="addStampBtn" class="btn btn-primary">+ Agregar Estrella</button><button id="removeStampBtn" class="btn btn-light">− Quitar Estrella</button><button id="manageRewardsBtn" class="btn btn-pink">🎁 Recompensas</button></div><div id="loyaltyHistory"></div></section></div></div>
+
+
+<div id="rewardsModal" class="modal hidden"><div class="modal-content rewards-modal">
+  <div class="modal-actions"><button id="closeRewardsModal" class="btn btn-light">Cerrar</button></div>
+  <section class="card">
+    <span class="badge">Club Brinky</span>
+    <h2>🎁 Recompensas del socio</h2>
+    <p id="rewardsMemberName" class="saved-meta"></p>
+    <div id="rewardsStatusList"></div>
+  </section>
+</div></div>
 
 <div id="messageModal" class="modal hidden"><div class="modal-content message-modal"><div class="modal-actions"><button id="closeMessageModal" class="btn btn-light">Cerrar</button><button id="saveMessageEdit" class="btn btn-blue">Guardar cambios</button><button id="sendMessageWhatsApp" class="btn btn-whatsapp">Compartir tarjeta y mensaje</button></div><section class="card"><span id="messageTypeBadge" class="badge"></span><h3 id="messageClientName"></h3><p id="messageClientPhone" class="saved-meta"></p><label>Mensaje<textarea id="messageEditor" rows="14"></textarea></label><p class="field-help">En celulares compatibles se abrirá el menú para compartir la tarjeta PNG junto con el mensaje. Si el navegador no lo permite, la tarjeta se descargará y WhatsApp se abrirá con el texto preparado.</p></section></div></div>
 
-<script src="app.js?v=70"></script>
+<script src="app.js?v=71"></script>
 </body></html>

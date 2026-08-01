@@ -3,7 +3,7 @@ const form = $('contractForm');
 const servicesList = $('servicesList');
 const serviceTemplate = $('serviceTemplate');
 const STORAGE_KEY = 'brinky_contracts_v1';
-const APP_VERSION='7.0';
+const APP_VERSION='7.1 DEV';
 const QUOTES_KEY='brinky_quotes_v1';
 const EXPENSES_KEY='brinky_expenses_v1';
 const LOYALTY_KEY='brinky_loyalty_v1';
@@ -50,7 +50,7 @@ function addService(data={}){
   select.addEventListener('change',()=>{syncCustom();updateServiceAvailability();});
   syncCustom();
   row.querySelector('.service-qty').value = data.qty || 1;
-  row.querySelector('.service-duration').value = data.duration || '4';
+  row.querySelector('.service-duration').value = data.durationLabel || data.duration || '4';
   row.querySelector('.service-price').value = data.price || 0;
   row.querySelector('.remove-service').addEventListener('click',()=>{row.remove();recalculateTotal();});
   row.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',recalculateTotal));
@@ -67,10 +67,10 @@ function addService(data={}){
 function getServices(){
   return [...servicesList.querySelectorAll('.service-row')].map(row=>({
     name:row.querySelector('.service-name').value==='OTRO' ? (row.querySelector('.service-custom').value.trim() || 'OTRO') : row.querySelector('.service-name').value,
-    qty:Number(row.querySelector('.service-qty').value||0),
-    duration:row.querySelector('.service-duration').value,
-    durationLabel:row.querySelector('.service-duration').selectedOptions[0].textContent,
-    price:Number(row.querySelector('.service-price').value||0)
+    qty:Number(String(row.querySelector('.service-qty').value||'0').replace(',','.'))||0,
+    duration:String(row.querySelector('.service-duration').value||'').trim(),
+    durationLabel:String(row.querySelector('.service-duration').value||'').trim(),
+    price:Number(String(row.querySelector('.service-price').value||'0').replace(',','.'))||0
   }));
 }
 
@@ -863,7 +863,7 @@ function addQuoteService(data={}){
   if(requested&&!names.includes(requested)){select.value='OTRO';custom.value=requested;custom.classList.remove('hidden')}else select.value=requested;
   const sync=()=>custom.classList.toggle('hidden',select.value!=='OTRO');select.addEventListener('change',sync);sync();
   row.querySelector('.service-qty').value=data.qty||1;
-  row.querySelector('.service-duration').value=data.duration||'4';
+  row.querySelector('.service-duration').value=data.durationLabel||data.duration||'4';
   row.querySelector('.service-price').value=data.price||0;
   row.querySelector('.remove-service').addEventListener('click',()=>{row.remove();recalculateQuote()});
   row.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',recalculateQuote));
@@ -877,8 +877,10 @@ function addQuoteService(data={}){
 }
 function getQuoteServices(){return [...quoteServicesList.querySelectorAll('.service-row')].map(row=>({
   name:row.querySelector('.service-name').value==='OTRO'?(row.querySelector('.service-custom').value.trim()||'OTRO'):row.querySelector('.service-name').value,
-  qty:Number(row.querySelector('.service-qty').value||0),duration:row.querySelector('.service-duration').value,
-  durationLabel:row.querySelector('.service-duration').selectedOptions[0].textContent,price:Number(row.querySelector('.service-price').value||0)
+  qty:Number(String(row.querySelector('.service-qty').value||'0').replace(',','.'))||0,
+  duration:String(row.querySelector('.service-duration').value||'').trim(),
+  durationLabel:String(row.querySelector('.service-duration').value||'').trim(),
+  price:Number(String(row.querySelector('.service-price').value||'0').replace(',','.'))||0
 }))}
 function recalculateQuote(){
   const subtotal=getQuoteServices().reduce((s,x)=>s+Number(x.price||0),0),discount=Math.max(0,Number($('quoteDiscount')?.value||0));
@@ -943,7 +945,15 @@ initQuotes();
 
 // ==================== CLUB BRINKY v5.0 VIP ====================
 let currentLoyaltyId=null;
-function getLoyalty(){try{return JSON.parse(localStorage.getItem(LOYALTY_KEY))||[]}catch{return []}}
+function getLoyalty(){
+  try{
+    return (JSON.parse(localStorage.getItem(LOYALTY_KEY))||[]).map(c=>({
+      ...c,
+      reward50Used:Boolean(c.reward50Used),
+      rewardHistory:Array.isArray(c.rewardHistory)?c.rewardHistory:[]
+    }))
+  }catch{return []}
+}
 function setLoyalty(items){localStorage.setItem(LOYALTY_KEY,JSON.stringify(items));renderLoyalty()}
 function getLoyaltySettings(){try{return {...{r1:4,n1:'50% de descuento',r2:8,n2:'1 renta gratis'},...(JSON.parse(localStorage.getItem(LOYALTY_SETTINGS_KEY))||{})}}catch{return {r1:4,n1:'50% de descuento',r2:8,n2:'1 renta gratis'}}}
 function normalizedPhone(v=''){return String(v).replace(/\D/g,'').slice(-10)}
@@ -957,6 +967,8 @@ window.completeContractAndStamp=id=>{
   if(!confirm('¿Marcar el servicio como realizado y agregar las Estrellas Brinky correspondientes?'))return;
 
   const d=contracts[i];
+  const customerPhone=normalizedPhone(d.clientPhone);
+  const existedBefore=getLoyalty().some(x=>normalizedPhone(x.phone)===customerPhone&&customerPhone);
   const customer=ensureLoyaltyClient(d.clientName,d.clientPhone);
   const clients=getLoyalty();
   const ci=clients.findIndex(x=>x.id===customer.id);
@@ -1006,7 +1018,10 @@ window.completeContractAndStamp=id=>{
   });
 
   localStorage.setItem(LOYALTY_KEY,JSON.stringify(clients));
-  queueLoyaltyMessage(clients[ci],rewardStatus(clients[ci])?'reward':'update',`contract-${d.id}`);
+  const customerMessageType=!existedBefore
+    ? 'welcome'
+    : (rewardStatus(clients[ci])?'reward':'update');
+  queueLoyaltyMessage(clients[ci],customerMessageType,`${customerMessageType}-contract-${d.id}`);
 
   contracts[i]={
     ...d,
@@ -1194,7 +1209,27 @@ function loadTemplateEditor(){
   document.querySelectorAll('[data-template-type]').forEach(b=>b.classList.toggle('active',b.dataset.templateType===selectedTemplateType));
 }
 
-function rewardStatus(c){const s=getLoyaltySettings(),st=Number(c.stamps||0);if(st>=s.r2)return {name:s.n2,target:s.r2};if(st>=s.r1)return {name:s.n1,target:s.r1};return null}
+function rewardStatus(c){
+  const s=getLoyaltySettings(),st=Number(c.stamps||0);
+  if(st>=s.r2)return {name:s.n2,target:s.r2,type:'free',available:true};
+  if(st>=s.r1&&!c.reward50Used)return {name:s.n1,target:s.r1,type:'discount',available:true};
+  return null
+}
+function reward50State(c){
+  const s=getLoyaltySettings(),st=Number(c.stamps||0);
+  if(c.reward50Used)return 'used';
+  return st>=s.r1?'available':'locked';
+}
+function rewardFreeState(c){
+  const s=getLoyaltySettings();
+  return Number(c.stamps||0)>=s.r2?'available':'locked';
+}
+function addRewardHistory(c,type,status,text){
+  c.rewardHistory=Array.isArray(c.rewardHistory)?c.rewardHistory:[];
+  c.rewardHistory.unshift({date:new Date().toISOString(),type,status,text});
+  c.history=Array.isArray(c.history)?c.history:[];
+  c.history.unshift({date:new Date().toISOString(),type:'reward',text});
+}
 
 function loyaltyTier(stamps){const n=Number(stamps||0);if(n>=16)return {name:'DIAMANTE',icon:'💎'};if(n>=8)return {name:'ORO',icon:'🥇'};if(n>=4)return {name:'PLATA',icon:'🥈'};return {name:'BRONCE',icon:'🥉'}}
 function loyaltyNext(c){const s=getLoyaltySettings(),n=Number(c.stamps||0);if(n<s.r1)return {left:s.r1-n,name:s.n1,target:s.r1};if(n<s.r2)return {left:s.r2-n,name:s.n2,target:s.r2};return {left:0,name:s.n2,target:s.r2}}
@@ -1205,7 +1240,46 @@ window.deleteLoyalty=id=>{if(confirm('¿Eliminar este cliente y su historial de 
 function stampDots(stamps,target){let out='';for(let i=1;i<=target;i++)out+=`<span class="stamp-dot ${i<=stamps?'filled':''}">${i<=stamps?'★':'☆'}</span>`;return out}
 function qrPayload(c){return `BRINKY FIESTA CLUB | ${c.code} | ${c.name} | ${c.phone}`}
 function qrUrl(c,size=500){return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(qrPayload(c))}`}
-window.openLoyalty=id=>{currentLoyaltyId=id;const c=getLoyalty().find(x=>x.id===id);if(!c)return;const s=getLoyaltySettings(),r=rewardStatus(c),tier=loyaltyTier(c.stamps),next=loyaltyNext(c),cta=next.left>0?`Te faltan solo <b>${next.left}</b> Estrella${next.left===1?'':'s'} Brinky para obtener <b>${escapeHtml(next.name)}</b>.`:`🎉 Ya desbloqueaste <b>${escapeHtml(next.name)}</b>.`;$('loyaltyCard').innerHTML=`<div class="vip-shine"></div><div class="vip-watermark">🐸</div><div class="loyalty-card-head"><img src="icons/icon-192.png" alt="Brinky"><div><h2>CLUB BRINKY</h2><p>MEMBRESÍA VIP · BRINKY FIESTA</p></div></div><div class="vip-tier">${tier.icon} NIVEL ${tier.name}</div><div class="loyalty-person"><h3>${escapeHtml(c.name)}</h3><p>🆔 ${escapeHtml(c.code)} · 📱 ${escapeHtml(c.phone)}</p><small>Miembro desde ${escapeHtml(memberSince(c))}</small></div><div class="stamp-grid">${stampDots(Number(c.stamps||0),s.r2)}</div><div class="loyalty-progress"><b>${Number(c.stamps||0)} de ${s.r2} Estrellas Brinky</b><span>${r?'🎁 Premio disponible: '+escapeHtml(r.name):'Próxima recompensa: '+escapeHtml(next.name)}</span></div><div class="qr-wrap"><img class="loyalty-qr" src="${qrUrl(c,300)}" alt="Código QR"><span>ESCANEA TU TARJETA</span></div><small>Consulta e identifica tu Tarjeta Club Brinky con este QR único.</small><div class="vip-cta">🎈 ${cta}</div><div class="referral-box">🤝 Comparte tu código <b>${escapeHtml(c.code)}</b><br><small>Cuando un amigo rente con tu código, ambos reciben 1 Estrella Brinky.</small></div>`;applyOnScreenCardAppearance();$('loyaltyHistory').innerHTML=(c.history||[]).length?(c.history||[]).map(h=>`<div class="history-row"><span>${new Date(h.date).toLocaleDateString('es-MX')}</span><b>${escapeHtml(h.text)}</b></div>`).join(''):'<div class="empty">Sin movimientos.</div>';$('loyaltyModal').classList.remove('hidden')}
+window.openLoyalty=id=>{
+  currentLoyaltyId=id;
+  const c=getLoyalty().find(x=>x.id===id);if(!c)return;
+  const s=getLoyaltySettings(),r=rewardStatus(c),tier=loyaltyTier(c.stamps),next=loyaltyNext(c);
+  const progress=Math.min(100,Math.round((Number(c.stamps||0)/s.r2)*100));
+  const cta=next.left>0
+    ?`Te faltan <b>${next.left}</b> Estrella${next.left===1?'':'s'} para <b>${escapeHtml(next.name)}</b>.`
+    :`🎉 Ya tienes disponible <b>${escapeHtml(next.name)}</b>.`;
+  const discountLabel=reward50State(c)==='used'?'✅ 50% utilizado':reward50State(c)==='available'?'🎁 50% disponible':`🔒 50% al llegar a ${s.r1}`;
+  const freeLabel=rewardFreeState(c)==='available'?'🏆 Renta gratis disponible':`🔒 Renta gratis: ${Number(c.stamps||0)} de ${s.r2}`;
+
+  $('loyaltyCard').innerHTML=`
+    <div class="vip-shine"></div>
+    <div class="vip-watermark">🐸</div>
+    <div class="loyalty-card-head"><img src="icons/icon-192.png" alt="Brinky"><div><h2>CLUB BRINKY</h2><p>MEMBRESÍA VIP · BRINKY FIESTA</p></div></div>
+    <div class="vip-tier">${tier.icon} NIVEL ${tier.name}</div>
+    <div class="loyalty-person"><h3>${escapeHtml(c.name)}</h3><p>🆔 ${escapeHtml(c.code)} · 📱 ${escapeHtml(c.phone)}</p><small>Miembro desde ${escapeHtml(memberSince(c))}</small></div>
+    <div class="stamp-grid">${stampDots(Number(c.stamps||0),s.r2)}</div>
+    <div class="loyalty-progress">
+      <b>${Number(c.stamps||0)} de ${s.r2} Estrellas Brinky</b>
+      <div class="progress-track"><i style="width:${progress}%"></i></div>
+      <strong>${progress}% del ciclo</strong>
+      <span>${r?'🎁 '+escapeHtml(r.name)+' disponible':'Próxima recompensa: '+escapeHtml(next.name)}</span>
+    </div>
+    <div class="reward-summary"><span>${discountLabel}</span><span>${freeLabel}</span></div>
+    <div class="qr-wrap"><img class="loyalty-qr" src="${qrUrl(c,300)}" alt="Código QR"><span>ESCANEA TU TARJETA</span></div>
+    <small class="qr-help">QR único para identificar esta Tarjeta Club Brinky.</small>
+    <div class="vip-cta">🎈 ${cta}</div>
+    <div class="referral-box">🤝 Comparte tu código <b>${escapeHtml(c.code)}</b><br><small>Cuando un amigo complete su renta con tu código, ambos reciben 1 Estrella Brinky.</small></div>`;
+  applyOnScreenCardAppearance();
+
+  const combined=[
+    ...(c.rewardHistory||[]).map(h=>({date:h.date,text:h.text})),
+    ...(c.history||[]).filter(h=>h.type!=='reward')
+  ].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  $('loyaltyHistory').innerHTML=combined.length
+    ?combined.map(h=>`<div class="history-row"><span>${new Date(h.date).toLocaleDateString('es-MX')}</span><b>${escapeHtml(h.text)}</b></div>`).join('')
+    :'<div class="empty">Sin movimientos.</div>';
+  $('loyaltyModal').classList.remove('hidden');
+}
 function updateCurrentLoyalty(delta,text,type='adjustment'){const items=getLoyalty(),i=items.findIndex(x=>x.id===currentLoyaltyId);if(i<0)return;const before=Number(items[i].stamps||0);items[i].stamps=Math.max(0,before+delta);items[i].history=items[i].history||[];items[i].history.unshift({date:new Date().toISOString(),type,text});setLoyalty(items);if(delta>0){const s=getLoyaltySettings(),after=items[i].stamps,msgType=(before<s.r2&&after>=s.r2)||(before<s.r1&&after>=s.r1)?'reward':'update';queueLoyaltyMessage(items[i],msgType,`${type}-${Date.now()}`)}openLoyalty(currentLoyaltyId)}
 $('loyaltyForm')?.addEventListener('submit',e=>{e.preventDefault();const phone=$('loyaltyPhone').value.trim(),key=normalizedPhone(phone),items=getLoyalty();if(items.some(c=>normalizedPhone(c.phone)===key&&key)){alert('Ya existe un cliente con ese teléfono.');return}const c={id:'LC-'+Date.now(),code:nextLoyaltyCode(),name:$('loyaltyName').value.trim(),phone,birthday:$('loyaltyBirthday').value,notes:$('loyaltyNotes').value.trim(),stamps:1,totalRents:0,totalSpent:0,referrals:0,history:[{date:new Date().toISOString(),type:'welcome',text:'Estrella Brinky de bienvenida'}],createdAt:new Date().toISOString()};const ref=$('loyaltyReferrer').value.trim().toUpperCase();if(ref){const ri=items.findIndex(x=>String(x.code).toUpperCase()===ref);if(ri>=0){items[ri].stamps=Number(items[ri].stamps||0)+1;items[ri].referrals=Number(items[ri].referrals||0)+1;items[ri].history.unshift({date:new Date().toISOString(),type:'referral',text:`Estrella Brinky por recomendar a ${c.name}`});c.history.unshift({date:new Date().toISOString(),type:'referral',text:`Primera Estrella Brinky usando la referencia ${ref}`});c.referredBy=items[ri].id;queueLoyaltyMessage(items[ri],'referral',`ref-${c.id}`)}}items.unshift(c);setLoyalty(items);queueLoyaltyMessage(c,'welcome',`welcome-${c.id}`);e.target.reset();renderMessages();alert(`Cliente registrado con 1 Estrella de Bienvenida. Código: ${c.code}`)})
 $('saveLoyaltySettings')?.addEventListener('click',()=>{const data={r1:Math.max(1,Number($('reward1Stamps').value||4)),n1:$('reward1Name').value.trim()||'Primer premio',r2:Math.max(1,Number($('reward2Stamps').value||8)),n2:$('reward2Name').value.trim()||'Premio principal'};if(data.r2<=data.r1){alert('La segunda meta debe ser mayor que la primera.');return}localStorage.setItem(LOYALTY_SETTINGS_KEY,JSON.stringify(data));renderLoyalty();alert('Configuración guardada.')})
@@ -1213,49 +1287,109 @@ function loyaltyMessage(c){return applyTemplate(getClubTemplates().update,c)}
 async function fetchQrBlob(c){const r=await fetch(qrUrl(c,700));if(!r.ok)throw new Error('QR');return await r.blob()}
 async function makeLoyaltyCardBlob(c){
   const s=getLoyaltySettings(),tier=loyaltyTier(c.stamps),next=loyaltyNext(c),a=getCardAppearance();
-  const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1500;
+  const progress=Math.min(100,Math.round((Number(c.stamps||0)/s.r2)*100));
+  const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1600;
   const g=canvas.getContext('2d');
   const round=(x,y,w,h,r,fill,stroke)=>{g.beginPath();g.roundRect(x,y,w,h,r);if(fill){g.fillStyle=fill;g.fill()}if(stroke){g.strokeStyle=stroke;g.lineWidth=6;g.stroke()}};
 
   if(a.backgroundMode==='image'&&a.backgroundImage){
     try{
-      const bg=await loadImageAsCanvas(a.backgroundImage);
-      g.drawImage(bg,0,0,1080,1500);
-      g.fillStyle=`rgba(0,0,0,${Number(a.overlay||0)})`;g.fillRect(0,0,1080,1500);
+      const bg=await loadImageAsCanvas(a.backgroundImage);g.drawImage(bg,0,0,1080,1600);
+      g.fillStyle=`rgba(0,0,0,${Math.max(.40,Number(a.overlay||0))})`;g.fillRect(0,0,1080,1600);
     }catch{
-      const grad=g.createLinearGradient(0,0,1080,1500);grad.addColorStop(0,a.primary);grad.addColorStop(1,a.secondary);g.fillStyle=grad;g.fillRect(0,0,1080,1500);
+      const grad=g.createLinearGradient(0,0,1080,1600);grad.addColorStop(0,a.primary);grad.addColorStop(1,a.secondary);g.fillStyle=grad;g.fillRect(0,0,1080,1600);
     }
   }else if(a.backgroundMode==='solid'){
-    g.fillStyle=a.primary;g.fillRect(0,0,1080,1500);
+    g.fillStyle=a.primary;g.fillRect(0,0,1080,1600);
   }else{
-    const grad=g.createLinearGradient(0,0,1080,1500);grad.addColorStop(0,a.primary);grad.addColorStop(.55,a.secondary);grad.addColorStop(1,a.primary);g.fillStyle=grad;g.fillRect(0,0,1080,1500);
+    const grad=g.createLinearGradient(0,0,1080,1600);grad.addColorStop(0,a.primary);grad.addColorStop(.55,a.secondary);grad.addColorStop(1,a.primary);g.fillStyle=grad;g.fillRect(0,0,1080,1600);
   }
 
-  for(let i=0;i<22;i++){g.fillStyle=`rgba(255,255,255,${.02+(i%3)*.01})`;g.beginPath();g.arc((i*197)%1080,(i*271)%1500,30+(i%5)*13,0,Math.PI*2);g.fill()}
-  round(34,34,1012,1432,48,null,tier.name==='DIAMANTE'?'#d9f4ff':tier.name==='ORO'?'#ffd84d':tier.name==='PLATA'?'#e5e7eb':'#d99a63');
-  g.textAlign='center';g.fillStyle='rgba(255,255,255,.08)';g.font='220px Arial';g.fillText('🐸',890,280);
-  g.fillStyle=a.text;g.font='bold 68px Arial';g.fillText('CLUB BRINKY',540,110);
+  round(34,34,1012,1532,48,null,tier.name==='DIAMANTE'?'#d9f4ff':tier.name==='ORO'?'#ffd84d':tier.name==='PLATA'?'#e5e7eb':'#d99a63');
+  g.textAlign='center';g.fillStyle=a.text;g.font='bold 68px Arial';g.fillText('CLUB BRINKY',540,110);
   g.font='bold 27px Arial';g.fillText('MEMBRESÍA VIP · BRINKY FIESTA',540,157);
-  round(350,180,380,62,31,'rgba(255,255,255,.18)');
-  g.font='bold 28px Arial';g.fillText(`${tier.icon} NIVEL ${tier.name}`,540,221);
-  round(88,265,904,190,30,'rgba(255,255,255,.94)');
-  g.fillStyle='#123b25';g.font='bold 49px Arial';g.fillText(String(c.name||'CLIENTE').toUpperCase(),540,335);
-  g.fillStyle='#35634a';g.font='30px Arial';g.fillText(`${c.code}  ·  ${c.phone||'Sin teléfono'}`,540,385);
-  g.font='24px Arial';g.fillText(`Miembro desde ${memberSince(c)}`,540,426);
-  g.fillStyle=a.text;g.font='bold 37px Arial';g.fillText(`${c.stamps} de ${s.r2} Estrellas Brinky`,540,515);
-  g.fillStyle=a.star;g.font='58px Arial';g.fillText('★'.repeat(Math.min(Number(c.stamps||0),s.r2))+'☆'.repeat(Math.max(0,s.r2-Number(c.stamps||0))),540,585);
-  const qr=await createImageBitmap(await fetchQrBlob(c));round(312,635,456,456,30,'#fff');g.drawImage(qr,345,668,390,390);
-  g.fillStyle=a.text;g.font='bold 28px Arial';g.fillText('ESCANEA TU TARJETA CLUB BRINKY',540,1140);
-  g.font='23px Arial';g.fillText('QR único de identificación',540,1178);
-  round(90,1215,900,118,26,'rgba(255,255,255,.14)');
-  g.font='bold 28px Arial';const cta=next.left>0?`Te faltan ${next.left} Estrella${next.left===1?'':'s'} para ${next.name}`:`¡Premio disponible: ${next.name}!`;
-  g.fillText(`🎈 ${cta}`,540,1265);g.font='23px Arial';g.fillText(`⭐ ${s.r1} = ${s.n1}   ·   🏆 ${s.r2} = ${s.n2}`,540,1307);
-  g.font='bold 25px Arial';g.fillText(`🤝 Recomienda con ${c.code}: ambos ganan 1 Estrella`,540,1390);
-  g.font='22px Arial';g.fillText('Cada fiesta suma diversión… ¡y también recompensas!',540,1437);
+
+  round(330,182,420,70,35,'#ffffff');
+  g.fillStyle='#153b27';g.font='bold 29px Arial';g.fillText(`${tier.icon} NIVEL ${tier.name}`,540,228);
+
+  round(75,280,930,190,30,'#ffffff','#dce8df');
+  g.fillStyle='#123b25';g.font='bold 49px Arial';g.fillText(String(c.name||'CLIENTE').toUpperCase(),540,350);
+  g.fillStyle='#264b36';g.font='30px Arial';g.fillText(`${c.code}  ·  ${c.phone||'Sin teléfono'}`,540,402);
+  g.font='24px Arial';g.fillText(`Miembro desde ${memberSince(c)}`,540,446);
+
+  round(75,495,930,175,30,'#123b25');
+  g.fillStyle='#ffffff';g.font='bold 37px Arial';g.fillText(`${c.stamps} de ${s.r2} Estrellas Brinky`,540,545);
+  g.fillStyle=a.star;g.font='58px Arial';g.fillText('★'.repeat(Math.min(Number(c.stamps||0),s.r2))+'☆'.repeat(Math.max(0,s.r2-Number(c.stamps||0))),540,610);
+  round(150,632,780,20,10,'#d9e4dc');round(150,632,780*(progress/100),20,10,a.star);
+  g.fillStyle='#ffffff';g.font='bold 22px Arial';g.fillText(`${progress}% del ciclo`,540,662);
+
+  try{
+    const qrBlob=await fetchQrBlob(c);
+    const qr=await createImageBitmap(qrBlob);
+    round(305,700,470,470,30,'#ffffff','#dce8df');
+    g.drawImage(qr,345,740,390,390);
+  }catch{
+    round(305,700,470,470,30,'#ffffff','#dce8df');
+    g.fillStyle='#173d28';g.font='bold 30px Arial';g.fillText('QR NO DISPONIBLE',540,900);
+    g.font='24px Arial';g.fillText(c.code,540,950);
+  }
+  g.fillStyle='#ffffff';g.font='bold 27px Arial';g.fillText('ESCANEA TU TARJETA CLUB BRINKY',540,1215);
+  g.font='22px Arial';g.fillText('Código QR único de identificación',540,1252);
+
+  round(75,1285,930,125,28,'#ffffff','#dce8df');
+  g.fillStyle='#173d28';g.font='bold 27px Arial';
+  const cta=next.left>0?`Te faltan ${next.left} Estrella${next.left===1?'':'s'} para ${next.name}`:`¡Premio disponible: ${next.name}!`;
+  g.fillText(cta,540,1335);
+  g.font='bold 22px Arial';g.fillText(`${s.r1} estrellas = ${s.n1}   ·   ${s.r2} estrellas = ${s.n2}`,540,1380);
+
+  round(75,1435,930,85,25,'#123b25');
+  g.fillStyle='#ffffff';g.font='bold 23px Arial';g.fillText(`Recomienda con ${c.code}: ambos ganan 1 Estrella`,540,1488);
+  g.font='20px Arial';g.fillText('Cada fiesta suma diversión y recompensas',540,1550);
   return await new Promise(res=>canvas.toBlob(res,'image/png'));
 }
 function saveBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-$('searchLoyalty')?.addEventListener('input',renderLoyalty);$('closeLoyaltyModal')?.addEventListener('click',()=>$('loyaltyModal').classList.add('hidden'));$('addStampBtn')?.addEventListener('click',()=>updateCurrentLoyalty(1,'Estrella Brinky agregada manualmente','stamp'));$('removeStampBtn')?.addEventListener('click',()=>updateCurrentLoyalty(-1,'Estrella Brinky retirada manualmente'));$('redeemRewardBtn')?.addEventListener('click',()=>{const c=getLoyalty().find(x=>x.id===currentLoyaltyId),r=c&&rewardStatus(c);if(!r){alert('El socio todavía no tiene un premio disponible.');return}if(confirm(`¿Canjear ${r.name} y descontar ${r.target} Estrellas Brinky?`))updateCurrentLoyalty(-r.target,`Premio canjeado: ${r.name}`,'redeem')});
+$('searchLoyalty')?.addEventListener('input',renderLoyalty);
+$('closeLoyaltyModal')?.addEventListener('click',()=>$('loyaltyModal').classList.add('hidden'));
+$('addStampBtn')?.addEventListener('click',()=>updateCurrentLoyalty(1,'Estrella Brinky agregada manualmente','stamp'));
+$('removeStampBtn')?.addEventListener('click',()=>updateCurrentLoyalty(-1,'Estrella Brinky retirada manualmente'));
+
+function renderRewardsModal(){
+  const c=getLoyalty().find(x=>x.id===currentLoyaltyId);if(!c)return;
+  const s=getLoyaltySettings(),discount=reward50State(c),free=rewardFreeState(c);
+  $('rewardsMemberName').textContent=`${c.name} · ${c.stamps} de ${s.r2} Estrellas Brinky`;
+  $('rewardsStatusList').innerHTML=`
+    <article class="reward-manage-card ${discount}">
+      <div><strong>${escapeHtml(s.n1)}</strong><span>${discount==='used'?'Utilizado':discount==='available'?'Disponible':`Disponible al llegar a ${s.r1} estrellas`}</span></div>
+      ${discount==='available'?'<button id="useDiscountReward" class="btn btn-primary">Usar 50% sin borrar estrellas</button>':''}
+    </article>
+    <article class="reward-manage-card ${free}">
+      <div><strong>${escapeHtml(s.n2)}</strong><span>${free==='available'?'Disponible':`Faltan ${Math.max(0,s.r2-Number(c.stamps||0))} estrellas`}</span></div>
+      ${free==='available'?'<button id="redeemFreeReward" class="btn btn-pink">Canjear renta gratis y reiniciar ciclo</button>':''}
+    </article>`;
+  $('useDiscountReward')?.addEventListener('click',()=>{
+    const items=getLoyalty(),i=items.findIndex(x=>x.id===currentLoyaltyId);if(i<0)return;
+    if(items[i].reward50Used){alert('El descuento del 50% ya fue utilizado en este ciclo.');return}
+    if(Number(items[i].stamps||0)<s.r1){alert('Todavía no está disponible.');return}
+    if(!confirm('¿Marcar el descuento del 50% como UTILIZADO? Las estrellas se conservarán.'))return;
+    items[i].reward50Used=true;
+    addRewardHistory(items[i],'discount','used',`Recompensa utilizada: ${s.n1}. Las estrellas se conservaron.`);
+    setLoyalty(items);renderRewardsModal();openLoyalty(currentLoyaltyId);
+  });
+  $('redeemFreeReward')?.addEventListener('click',()=>{
+    const items=getLoyalty(),i=items.findIndex(x=>x.id===currentLoyaltyId);if(i<0)return;
+    if(Number(items[i].stamps||0)<s.r2){alert('La renta gratis todavía no está disponible.');return}
+    if(!confirm(`¿Canjear ${s.n2}? Esto reiniciará el ciclo a 0 estrellas.`))return;
+    addRewardHistory(items[i],'free','redeemed',`Recompensa canjeada: ${s.n2}. Nuevo ciclo iniciado.`);
+    items[i].stamps=0;
+    items[i].reward50Used=false;
+    setLoyalty(items);renderRewardsModal();openLoyalty(currentLoyaltyId);
+  });
+}
+$('manageRewardsBtn')?.addEventListener('click',()=>{
+  renderRewardsModal();
+  $('rewardsModal').classList.remove('hidden');
+});
+$('closeRewardsModal')?.addEventListener('click',()=>$('rewardsModal').classList.add('hidden'));
 $('shareLoyaltyWhatsApp')?.addEventListener('click',async()=>{const c=getLoyalty().find(x=>x.id===currentLoyaltyId);if(!c)return;try{const blob=await makeLoyaltyCardBlob(c),file=new File([blob],`Tarjeta_Club_Brinky_${c.code}.png`,{type:'image/png'}),text=loyaltyMessage(c);if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({title:`Tarjeta Club Brinky ${c.code}`,text,files:[file]});}else{saveBlob(blob,file.name);const phone=normalizedPhone(c.phone);window.open(`https://wa.me/${phone?'52'+phone:''}?text=${encodeURIComponent(text+'\n\n📎 La tarjeta con el QR se descargó como imagen. Adjúntala en este chat.')}`,'_blank');alert('La tarjeta con QR se descargó como imagen. WhatsApp se abrirá para que la adjuntes.');}}catch(e){if(e?.name!=='AbortError')alert('No se pudo generar o compartir la tarjeta con QR. Verifica tu conexión a internet.')}});
 $('downloadLoyaltyQr')?.addEventListener('click',async()=>{const c=getLoyalty().find(x=>x.id===currentLoyaltyId);if(!c)return;try{saveBlob(await fetchQrBlob(c),`QR_Club_Brinky_${c.code}.png`)}catch{alert('No se pudo descargar el QR. Verifica tu conexión a internet.')}});
 $('shareLoyaltyCard')?.addEventListener('click',async()=>{const c=getLoyalty().find(x=>x.id===currentLoyaltyId);if(!c)return;try{const blob=await makeLoyaltyCardBlob(c),file=new File([blob],`Tarjeta_Club_Brinky_${c.code}.png`,{type:'image/png'});if(navigator.canShare?.({files:[file]})){await navigator.share({title:'Tarjeta Club Brinky',text:loyaltyMessage(c),files:[file]})}else{saveBlob(blob,file.name);alert('La tarjeta se descargó como imagen. Puedes adjuntarla en WhatsApp.')}}catch(e){if(e?.name!=='AbortError')alert('No se pudo compartir la tarjeta. Verifica tu conexión a internet.')}});

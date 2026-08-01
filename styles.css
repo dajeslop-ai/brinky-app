@@ -169,3 +169,106 @@ input:focus,select:focus,textarea:focus{
 @media (max-width:620px){
   .smart-next-event small{max-width:140px}
 }
+
+
+/* Brinky Suite Pro v7.1 DEV */
+.manual-number{
+  appearance:textfield;
+  -moz-appearance:textfield;
+}
+.manual-number::-webkit-outer-spin-button,
+.manual-number::-webkit-inner-spin-button{
+  -webkit-appearance:none;
+  margin:0;
+}
+.loyalty-card{
+  text-shadow:none!important;
+}
+.loyalty-card .vip-tier,
+.loyalty-card .loyalty-person,
+.loyalty-card .loyalty-progress,
+.loyalty-card .qr-wrap,
+.loyalty-card .vip-cta,
+.loyalty-card .referral-box,
+.loyalty-card .reward-summary{
+  opacity:1!important;
+  filter:none!important;
+  backdrop-filter:none!important;
+}
+.loyalty-card .vip-tier{
+  background:#fff!important;
+  color:#173d28!important;
+}
+.loyalty-card .loyalty-person{
+  background:#fff!important;
+  color:#173d28!important;
+}
+.loyalty-card .loyalty-person h3,
+.loyalty-card .loyalty-person p,
+.loyalty-card .loyalty-person small{
+  color:#173d28!important;
+}
+.loyalty-card .loyalty-progress{
+  background:#123b25!important;
+  color:#fff!important;
+}
+.loyalty-card .loyalty-progress span,
+.loyalty-card .loyalty-progress strong{
+  color:#fff!important;
+}
+.progress-track{
+  height:12px;
+  margin:9px 0 5px;
+  background:#dce7df;
+  border-radius:999px;
+  overflow:hidden;
+}
+.progress-track i{
+  display:block;
+  height:100%;
+  background:var(--club-star-color,#ffd84d);
+  border-radius:999px;
+}
+.reward-summary{
+  display:grid;
+  gap:7px;
+  margin:10px 0;
+  padding:12px;
+  background:#fff;
+  color:#173d28;
+  border-radius:14px;
+  font-weight:900;
+}
+.qr-help{
+  color:#fff!important;
+  font-weight:800;
+}
+.rewards-modal{max-width:620px}
+.reward-manage-card{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+  padding:16px;
+  margin:12px 0;
+  border-radius:15px;
+  border:1px solid #dfe4e1;
+  background:#f7f8f8;
+}
+.reward-manage-card div{
+  display:grid;
+  gap:5px;
+}
+.reward-manage-card strong{font-size:1.05rem}
+.reward-manage-card span{color:#66716b}
+.reward-manage-card.available{
+  border-color:#77d397;
+  background:#edfff3;
+}
+.reward-manage-card.used{
+  border-color:#bfc5c1;
+  background:#f1f2f2;
+}
+.reward-manage-card.locked{
+  opacity:.78;
+}
