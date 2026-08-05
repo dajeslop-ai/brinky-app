@@ -437,3 +437,28 @@ input:focus,select:focus,textarea:focus{
     justify-content:flex-start;
   }
 }
+
+
+/* Brinky Suite Pro v7.4 DEV */
+.facebook-link-settings{
+  margin-top:12px;
+}
+.facebook-link-preview{
+  margin:10px 0 0;
+  padding:10px 12px;
+  border-radius:10px;
+  background:#eef5ff;
+  color:#1758a6;
+  font-size:.86rem;
+  font-weight:800;
+  word-break:break-word;
+}
+
+
+/* Brinky Suite Pro v7.5 DEV */
+.facebook-link-settings{display:block}
+.facebook-link-preview span{
+  display:inline-block;
+  margin-left:4px;
+  word-break:break-all;
+}

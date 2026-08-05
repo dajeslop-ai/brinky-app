@@ -1,31 +1,24 @@
-BRINKY SUITE PRO v7.3 DEV — CENTRO DE ATENCIÓN DE SOCIOS
+BRINKY SUITE PRO v7.5 DEV — FACEBOOK INTEGRADO
 
 CAMBIOS
 
-1. CENTRO DE ATENCIÓN AL INICIO DE CLUB
-- Nuevo bloque superior “Atención rápida de socios”.
-- Aparece antes de configuraciones, registros y lista completa.
+1. CONFIGURACIÓN SIMPLIFICADA
+- Se eliminó el campo separado de reseñas.
+- Se eliminó el selector Página/Reseñas.
+- Ahora existe un solo campo: Página oficial de Facebook.
+- Viene preconfigurado con:
+  https://www.facebook.com/profile.php?id=61578868178582
 
-2. BUSCADOR SIEMPRE VISIBLE
-- Busca mientras escribes por:
-  • nombre;
-  • teléfono;
-  • código BRK.
-- Muestra resultados rápidos con nombre, código, teléfono y estrellas.
-- Al tocar un resultado abre directamente la ficha del socio.
+2. MENSAJES DE WHATSAPP
+- Bienvenida incluye el enlace de Facebook.
+- Actualización incluye el enlace de Facebook.
+- Premio desbloqueado incluye el enlace de Facebook.
+- Referencia incluye el enlace de Facebook.
+- El texto invita a visitar la página y compartir una opinión.
 
-3. BOTÓN PRINCIPAL DE ESCANEO
-- Botón grande “Escanear tarjeta de socio”.
-- Abre el mismo lector QR corregido de la v7.2.1.
-- Conserva búsqueda manual por código como respaldo.
+3. PLANTILLAS PERSONALIZADAS ANTIGUAS
+- Si una plantilla guardada anteriormente no contiene {FACEBOOK},
+  la aplicación añade automáticamente el enlace al final.
 
-4. ORGANIZACIÓN
-- Se eliminó el botón pequeño de escaneo de Configuración.
-- La lista “Socios Club” y la personalización permanecen más abajo.
-
-Esta versión conserva:
-- QR con ID interno único;
-- control de códigos duplicados;
-- sistema de recompensas;
-- tarjeta y WhatsApp;
-- contratos, cotizaciones y reportes.
+4. VARIABLE AUTOMÁTICA
+- {FACEBOOK} siempre se sustituye por la página oficial configurada.

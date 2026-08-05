@@ -3,7 +3,7 @@ const form = $('contractForm');
 const servicesList = $('servicesList');
 const serviceTemplate = $('serviceTemplate');
 const STORAGE_KEY = 'brinky_contracts_v1';
-const APP_VERSION='7.3 DEV';
+const APP_VERSION='7.5 DEV';
 const QUOTES_KEY='brinky_quotes_v1';
 const EXPENSES_KEY='brinky_expenses_v1';
 const LOYALTY_KEY='brinky_loyalty_v1';
@@ -16,7 +16,7 @@ const COMPANY = {
   name:'BRINKY FIESTA',
   address:'Calle 13 x 18 y 20, Col. Centro, Umán, Yucatán',
   whatsapp:'999 447 6314',
-  facebook:'Brincolines Brinky Fiesta'
+  facebook:'https://www.facebook.com/profile.php?id=61578868178582'
 };
 let deferredPrompt;
 let previewIsNewContract = false;
@@ -161,11 +161,12 @@ function focusAndSelect(el){
 }
 function navigableFields(form){
   if(!form)return[];
-  return [...form.querySelectorAll('input,select,textarea,button')]
+  // Los botones auxiliares no participan en el recorrido con ENTER.
+  // Así Electricidad continúa directamente a Servicio, Cantidad, Tiempo y Precio.
+  return [...form.querySelectorAll('input,select,textarea')]
     .filter(el=>{
       if(el.disabled||el.hidden||el.type==='hidden'||el.tabIndex<0)return false;
       if(el.closest('.hidden'))return false;
-      if(el.matches('.remove-service'))return false;
       const style=getComputedStyle(el);
       return style.display!=='none'&&style.visibility!=='hidden';
     });
@@ -1074,12 +1075,14 @@ Hola *{NOMBRE}*. Tu registro se completó correctamente y recibiste *1 Estrella 
 🎁 Próxima recompensa: *{RECOMPENSA}*
 Te faltan *{FALTANTES} Estrellas Brinky*.
 
-🤝 Recomienda a un amigo usando tu código y, cuando complete su renta, ambos ganan 1 Estrella Brinky.
+🤝 Recomienda a un amigo usando tu código. Cuando complete su renta, ambos reciben 1 Estrella Brinky.
 
-Síguenos en Facebook:
+⭐ *¿Te gustó nuestro servicio?*
+Visita nuestra página de Facebook y comparte tu opinión:
 {FACEBOOK}
 
 ¡Gracias por formar parte de Brinky Fiesta! 🎈`,
+
   update:`⭐ *¡Tu Tarjeta Club Brinky fue actualizada!*
 
 Hola *{NOMBRE}*. Acabas de recibir una nueva Estrella Brinky.
@@ -1089,11 +1092,13 @@ Hola *{NOMBRE}*. Acabas de recibir una nueva Estrella Brinky.
 🎁 Próxima recompensa: *{RECOMPENSA}*
 Te faltan *{FALTANTES} Estrellas Brinky*.
 
-Código de referencia: *{CODIGO}*
-Recomienda a un amigo usando tu código y ambos ganan 1 estrella cuando complete su renta.
+🤝 Comparte tu código *{CODIGO}*. Cuando un amigo complete su renta, ambos reciben 1 Estrella Brinky.
 
-Facebook:
-{FACEBOOK}`,
+📘 Conoce promociones, novedades y déjanos tu opinión en Facebook:
+{FACEBOOK}
+
+¡Gracias por elegir Brinky Fiesta! 🐸🎉`,
+
   reward:`🎉 *¡RECOMPENSA DESBLOQUEADA!* 🎁
 
 Hola *{NOMBRE}*. Ya acumulaste *{ESTRELLAS} Estrellas Brinky* y puedes disfrutar de:
@@ -1102,9 +1107,13 @@ Hola *{NOMBRE}*. Ya acumulaste *{ESTRELLAS} Estrellas Brinky* y puedes disfrutar
 
 Escríbenos al realizar tu próxima reservación para aplicar tu beneficio.
 
-Código: *{CODIGO}*
-Facebook:
-{FACEBOOK}`,
+🆔 Código de socio: *{CODIGO}*
+
+⭐ Visita nuestra página de Facebook y comparte tu experiencia:
+{FACEBOOK}
+
+¡Gracias por tu preferencia! 🎈`,
+
   referral:`🤝 *¡Ganaste una Estrella Brinky por recomendar!*
 
 Hola *{NOMBRE}*. Una persona utilizó tu código *{CODIGO}* y tu tarjeta fue actualizada.
@@ -1116,9 +1125,10 @@ Te faltan *{FALTANTES} Estrellas Brinky*.
 
 ¡Sigue recomendando y acumulando recompensas! 🐸🎉
 
-Facebook:
+📘 Visita nuestra página de Facebook:
 {FACEBOOK}`,
-  facebook:'Brincolines Brinky Fiesta'
+
+  facebook:'https://www.facebook.com/profile.php?id=61578868178582'
 };
 function getCardAppearance(){
   try{return {...DEFAULT_CARD_APPEARANCE,...JSON.parse(localStorage.getItem(CLUB_APPEARANCE_KEY)||'{}')}}catch{return {...DEFAULT_CARD_APPEARANCE}}
@@ -1140,7 +1150,12 @@ function messageVariables(c){
     FALTANTES:String(Math.max(0,next.left||0)),
     RECOMPENSA:r?.name||next.name||s.n1,
     PROGRESO:filled+empty,
-    FACEBOOK:getClubTemplates().facebook||COMPANY.facebook
+    FACEBOOK:(()=>{
+      const t=getClubTemplates();
+      return t.facebook
+        || t.facebookPage
+        || 'https://www.facebook.com/profile.php?id=61578868178582';
+    })()
   };
 }
 function applyTemplate(template,c){
@@ -1191,7 +1206,12 @@ function fillCustomizationControls(){
   if($('cardTextColor'))$('cardTextColor').value=a.text;
   if($('cardStarColor'))$('cardStarColor').value=a.star;
   if($('cardOverlayOpacity'))$('cardOverlayOpacity').value=a.overlay;
-  if($('clubFacebookLink'))$('clubFacebookLink').value=t.facebook||'';
+  if($('clubFacebookLink')){
+    $('clubFacebookLink').value=t.facebook
+      || t.facebookPage
+      || 'https://www.facebook.com/profile.php?id=61578868178582';
+  }
+  updateFacebookLinkPreview();
 }
 function readAppearanceControls(){
   const current=getCardAppearance();
@@ -1204,6 +1224,16 @@ function readAppearanceControls(){
     star:$('cardStarColor')?.value||'#ffd84d',
     overlay:Number($('cardOverlayOpacity')?.value||0.3)
   };
+}
+function selectedFacebookLink(){
+  return $('clubFacebookLink')?.value.trim()
+    || 'https://www.facebook.com/profile.php?id=61578868178582';
+}
+function updateFacebookLinkPreview(){
+  const el=$('facebookLinkPreview');
+  if(!el)return;
+  const link=selectedFacebookLink();
+  el.innerHTML=`La variable <b>{FACEBOOK}</b> abrirá: <span>${escapeHtml(link)}</span>`;
 }
 let selectedTemplateType='welcome';
 function loadTemplateEditor(){
@@ -1306,7 +1336,14 @@ window.openLoyalty=id=>{
 function updateCurrentLoyalty(delta,text,type='adjustment'){const items=getLoyalty(),i=items.findIndex(x=>x.id===currentLoyaltyId);if(i<0)return;const before=Number(items[i].stamps||0);items[i].stamps=Math.max(0,before+delta);items[i].history=items[i].history||[];items[i].history.unshift({date:new Date().toISOString(),type,text});setLoyalty(items);if(delta>0){const s=getLoyaltySettings(),after=items[i].stamps,msgType=(before<s.r2&&after>=s.r2)||(before<s.r1&&after>=s.r1)?'reward':'update';queueLoyaltyMessage(items[i],msgType,`${type}-${Date.now()}`)}openLoyalty(currentLoyaltyId)}
 $('loyaltyForm')?.addEventListener('submit',e=>{e.preventDefault();const phone=$('loyaltyPhone').value.trim(),key=normalizedPhone(phone),items=getLoyalty();if(items.some(c=>normalizedPhone(c.phone)===key&&key)){alert('Ya existe un cliente con ese teléfono.');return}const c={id:'LC-'+Date.now(),code:nextLoyaltyCode(),name:$('loyaltyName').value.trim(),phone,birthday:$('loyaltyBirthday').value,notes:$('loyaltyNotes').value.trim(),stamps:1,totalRents:0,totalSpent:0,referrals:0,history:[{date:new Date().toISOString(),type:'welcome',text:'Estrella Brinky de bienvenida'}],createdAt:new Date().toISOString()};const ref=$('loyaltyReferrer').value.trim().toUpperCase();if(ref){const ri=items.findIndex(x=>String(x.code).toUpperCase()===ref);if(ri>=0){items[ri].stamps=Number(items[ri].stamps||0)+1;items[ri].referrals=Number(items[ri].referrals||0)+1;items[ri].history.unshift({date:new Date().toISOString(),type:'referral',text:`Estrella Brinky por recomendar a ${c.name}`});c.history.unshift({date:new Date().toISOString(),type:'referral',text:`Primera Estrella Brinky usando la referencia ${ref}`});c.referredBy=items[ri].id;queueLoyaltyMessage(items[ri],'referral',`ref-${c.id}`)}}items.unshift(c);setLoyalty(items);queueLoyaltyMessage(c,'welcome',`welcome-${c.id}`);e.target.reset();renderMessages();alert(`Cliente registrado con 1 Estrella de Bienvenida. Código: ${c.code}`)})
 $('saveLoyaltySettings')?.addEventListener('click',()=>{const data={r1:Math.max(1,Number($('reward1Stamps').value||4)),n1:$('reward1Name').value.trim()||'Primer premio',r2:Math.max(1,Number($('reward2Stamps').value||8)),n2:$('reward2Name').value.trim()||'Premio principal'};if(data.r2<=data.r1){alert('La segunda meta debe ser mayor que la primera.');return}localStorage.setItem(LOYALTY_SETTINGS_KEY,JSON.stringify(data));renderLoyalty();alert('Configuración guardada.')})
-function loyaltyMessage(c){return applyTemplate(getClubTemplates().update,c)}
+function loyaltyMessage(c){
+  const templates=getClubTemplates();
+  let template=templates.update||DEFAULT_CLUB_TEMPLATES.update;
+  if(!template.includes('{FACEBOOK}')){
+    template+=`\n\n📘 Visita nuestra página de Facebook:\n{FACEBOOK}`;
+  }
+  return applyTemplate(template,c);
+}
 async function fetchQrBlob(c){const r=await fetch(qrUrl(c,700));if(!r.ok)throw new Error('QR');return await r.blob()}
 async function makeLoyaltyCardBlob(c){
   const s=getLoyaltySettings(),tier=loyaltyTier(c.stamps),next=loyaltyNext(c),a=getCardAppearance();
@@ -1458,8 +1495,13 @@ document.querySelectorAll('[data-template-type]').forEach(btn=>btn.addEventListe
 $('saveMessageTemplates')?.addEventListener('click',()=>{
   const t=getClubTemplates();
   t[selectedTemplateType]=$('clubMessageTemplate').value;
-  t.facebook=$('clubFacebookLink').value.trim()||COMPANY.facebook;
-  setClubTemplates(t);alert('Plantillas guardadas. Se usarán automáticamente en los mensajes nuevos.');
+  t.facebook=selectedFacebookLink();
+  delete t.facebookPage;
+  delete t.facebookReviews;
+  delete t.facebookMode;
+  setClubTemplates(t);
+  updateFacebookLinkPreview();
+  alert('Plantillas y enlace de Facebook guardados. Se usarán automáticamente en los mensajes nuevos.');
 });
 $('restoreMessageTemplates')?.addEventListener('click',()=>{
   if(!confirm('¿Restaurar todos los mensajes originales?'))return;
@@ -1470,6 +1512,7 @@ $('previewMessageTemplate')?.addEventListener('click',()=>{
   const preview=applyTemplate($('clubMessageTemplate').value,sample),el=$('messageTemplatePreview');
   el.textContent=preview;el.classList.remove('hidden');
 });
+$('clubFacebookLink')?.addEventListener('input',updateFacebookLinkPreview);
 fillCustomizationControls();
 loadTemplateEditor();
 fillPdfPromoEditor();
@@ -1501,7 +1544,11 @@ function messageTypeLabel(type){return ({welcome:'Bienvenida',update:'Actualizac
 function buildClubMessage(c,type){
   const templates=getClubTemplates();
   const key=['welcome','update','reward','referral'].includes(type)?type:'update';
-  return applyTemplate(templates[key],c);
+  let template=templates[key]||DEFAULT_CLUB_TEMPLATES[key];
+  if(!template.includes('{FACEBOOK}')){
+    template+=`\n\n📘 Visita nuestra página de Facebook:\n{FACEBOOK}`;
+  }
+  return applyTemplate(template,c);
 }
 function queueLoyaltyMessage(c,type,dedupeKey=''){if(!c)return;const items=getMessages(),key=dedupeKey||`${type}-${c.id}-${c.stamps}`;if(items.some(m=>m.dedupeKey===key))return;items.unshift({id:'MSG-'+Date.now()+'-'+Math.random().toString(36).slice(2,6),clientId:c.id,clientName:c.name,phone:c.phone,type,text:buildClubMessage(c,type),status:'pending',dedupeKey:key,createdAt:new Date().toISOString(),sentAt:null});localStorage.setItem(MESSAGES_KEY,JSON.stringify(items));updateMessageCounters()}
 function updateMessageCounters(){const n=getMessages().filter(m=>m.status==='pending').length;if($('messagePendingCount'))$('messagePendingCount').textContent=n;if($('statMessages'))$('statMessages').textContent=n;const b=$('navMessageBadge');if(b){b.textContent=n;b.classList.toggle('hidden',n===0)}}

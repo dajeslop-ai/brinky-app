@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#16a34a"><title>Brinky Suite Pro</title>
 <link rel="manifest" href="manifest.json"><link rel="icon" href="icons/icon-192.png?v=37"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=36">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Brinky Suite">
-<link rel="stylesheet" href="styles.css?v=73">
+<link rel="stylesheet" href="styles.css?v=75">
 </head>
 <body>
 <header class="topbar">
@@ -15,7 +15,7 @@
 </header>
 <main>
 <section id="homeView" class="view active">
-  <div class="welcome card"><div><span class="badge">Versión 7.3 DEV · Atención rápida de socios</span><h2>Bienvenido</h2><p>Administra tus contratos desde el smartphone.</p></div><img src="icons/icon-192.png?v=37" alt="Brinky"></div>
+  <div class="welcome card"><div><span class="badge">Versión 7.5 DEV · Facebook integrado</span><h2>Bienvenido</h2><p>Administra tus contratos desde el smartphone.</p></div><img src="icons/icon-192.png?v=37" alt="Brinky"></div>
   <div class="stats">
     <article class="stat card"><b id="statContracts">0</b><span>Contratos guardados</span></article>
     <article class="stat card"><b id="statUpcoming">0</b><span>Próximos eventos</span></article>
@@ -163,10 +163,6 @@
   </section>
 
   <section class="card hero"><div><span class="badge">Club Brinky</span><h2>Tarjeta de fidelidad digital</h2><p>Administra socios, Estrellas Brinky, premios, QR y referidos.</p></div><div class="folio">⭐ <strong id="loyaltyClientCount">0</strong> socios</div></section>
-  <section class="card"><div class="section-head"><div><h3>Configuración de recompensas</h3><p>Modifica las metas sin reprogramar la aplicación.</p></div></div><div class="grid two">
-    <label>Primera meta (Estrellas Brinky)<input id="reward1Stamps" type="number" min="1" value="4"></label><label>Premio<input id="reward1Name" value="50% de descuento"></label>
-    <label>Segunda meta (Estrellas Brinky)<input id="reward2Stamps" type="number" min="1" value="8"></label><label>Premio<input id="reward2Name" value="1 renta gratis"></label>
-  </div><button id="saveLoyaltySettings" class="btn btn-primary">Guardar configuración</button></section>
 
   <section class="card"><div class="section-head"><div><h3>Registrar socio</h3><p>El teléfono evita registros duplicados.</p></div></div><form id="loyaltyForm" class="grid two">
     <label>Nombre completo<input id="loyaltyName" required></label><label>Teléfono / WhatsApp<input id="loyaltyPhone" required inputmode="tel"></label>
@@ -174,10 +170,15 @@
     <label class="full">Notas<input id="loyaltyNotes" placeholder="Preferencias, colonia, festejado..."></label><button class="btn btn-primary" type="submit">Guardar socio</button>
   </form></section>
   <section class="card"><div class="section-head"><div><h3>Socios Club</h3><p>Busca por nombre, teléfono o código.</p></div></div><input id="searchLoyalty" class="search" placeholder="Buscar socio en la lista completa"><div id="loyaltyList"></div></section>
+<section class="card"><div class="section-head"><div><h3>Configuración de recompensas</h3><p>Modifica las metas sin reprogramar la aplicación.</p></div></div><div class="grid two">
+    <label>Primera meta (Estrellas Brinky)<input id="reward1Stamps" type="number" min="1" value="4"></label><label>Premio<input id="reward1Name" value="50% de descuento"></label>
+    <label>Segunda meta (Estrellas Brinky)<input id="reward2Stamps" type="number" min="1" value="8"></label><label>Premio<input id="reward2Name" value="1 renta gratis"></label>
+  </div><button id="saveLoyaltySettings" class="btn btn-primary">Guardar configuración</button></section>
+
 
 
 <section class="card club-customization">
-    <div class="section-head"><div><h3>🎨 Personalización de Tarjeta Socio</h3><p>Cambia colores o fondo sin alterar la estructura de la tarjeta.</p></div></div>
+    <div class="section-head"><div><h3>🎨 Apariencia de tarjeta</h3><p>Cambia colores o fondo sin alterar la estructura de la tarjeta.</p></div></div>
 
     <details open>
       <summary><b>Apariencia de la tarjeta</b></summary>
@@ -240,7 +241,13 @@
         <button type="button" class="template-tab" data-template-type="referral">Referencia</button>
       </div>
       <label>Plantilla seleccionada<textarea id="clubMessageTemplate" rows="14"></textarea></label>
-      <label>Enlace o nombre de Facebook<input id="clubFacebookLink" placeholder="https://facebook.com/..."></label>
+      <div class="facebook-link-settings">
+        <label>Página oficial de Facebook
+          <input id="clubFacebookLink" type="url" value="https://www.facebook.com/profile.php?id=61578868178582" placeholder="https://www.facebook.com/tu-pagina">
+          <span class="field-help">Este enlace se insertará automáticamente en todos los mensajes nuevos del Club Brinky.</span>
+        </label>
+      </div>
+      <p id="facebookLinkPreview" class="facebook-link-preview"></p>
       <div class="custom-actions">
         <button id="previewMessageTemplate" type="button" class="btn btn-blue">Vista previa</button>
         <button id="saveMessageTemplates" type="button" class="btn btn-primary">Guardar plantillas</button>
@@ -296,5 +303,5 @@
 
 <div id="messageModal" class="modal hidden"><div class="modal-content message-modal"><div class="modal-actions"><button id="closeMessageModal" class="btn btn-light">Cerrar</button><button id="saveMessageEdit" class="btn btn-blue">Guardar cambios</button><button id="sendMessageWhatsApp" class="btn btn-whatsapp">Compartir tarjeta y mensaje</button></div><section class="card"><span id="messageTypeBadge" class="badge"></span><h3 id="messageClientName"></h3><p id="messageClientPhone" class="saved-meta"></p><label>Mensaje<textarea id="messageEditor" rows="14"></textarea></label><p class="field-help">En celulares compatibles se abrirá el menú para compartir la tarjeta PNG junto con el mensaje. Si el navegador no lo permite, la tarjeta se descargará y WhatsApp se abrirá con el texto preparado.</p></section></div></div>
 
-<script src="app.js?v=73"></script>
+<script src="app.js?v=75"></script>
 </body></html>
