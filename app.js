@@ -3,7 +3,7 @@ const form = $('contractForm');
 const servicesList = $('servicesList');
 const serviceTemplate = $('serviceTemplate');
 const STORAGE_KEY = 'brinky_contracts_v1';
-const APP_VERSION='7.6 DEV';
+const APP_VERSION='7.6.1 DEV';
 const QUOTES_KEY='brinky_quotes_v1';
 const EXPENSES_KEY='brinky_expenses_v1';
 const LOYALTY_KEY='brinky_loyalty_v1';
@@ -818,19 +818,83 @@ async function createPdfFile(d){
   return new File([blob],`${d.id}-Brinky-Fiesta.pdf`,{type:'application/pdf'});
 }
 
+
+function compactDocumentMessage(d,type='contract'){
+  const vars=documentMessageVariables(d,type);
+  if(type==='quote'){
+    return `Hola ${vars.CLIENTE}, te compartimos tu cotización ${vars.FOLIO} de Brinky Fiesta. Fecha: ${vars.FECHA}. Total: ${vars.TOTAL}. ${vars.FACEBOOK}`;
+  }
+  return `Hola ${vars.CLIENTE}, te compartimos tu contrato ${vars.FOLIO} de Brinky Fiesta. Fecha: ${vars.FECHA}. Total: ${vars.TOTAL}. Anticipo: ${vars.ANTICIPO}. Saldo: ${vars.SALDO}. ${vars.FACEBOOK}`;
+}
+function downloadSharedFile(file){
+  const url=URL.createObjectURL(file);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=file.name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+async function sharePdfReliably({file,title,fullText,compactText,phone}){
+  const canShareFile=navigator.share
+    && (!navigator.canShare || navigator.canShare({files:[file]}));
+
+  if(canShareFile){
+    try{
+      await navigator.share({title,text:fullText,files:[file]});
+      return {mode:'full'};
+    }catch(error){
+      if(error?.name==='AbortError')throw error;
+      console.warn('Falló compartir con mensaje completo:',error);
+      try{
+        await navigator.share({title,text:compactText,files:[file]});
+        return {mode:'compact'};
+      }catch(secondError){
+        if(secondError?.name==='AbortError')throw secondError;
+        console.warn('Falló compartir con mensaje compacto:',secondError);
+      }
+    }
+  }
+
+  downloadSharedFile(file);
+  const digits=String(phone||'').replace(/\D/g,'');
+  const destination=digits.length===10?'52'+digits:digits;
+  window.open(
+    `https://wa.me/${destination}?text=${encodeURIComponent(fullText+'\n\nEl PDF se descargó en tu dispositivo; adjúntalo en este chat.')}`,
+    '_blank'
+  );
+  return {mode:'download'};
+}
+
 async function shareContract(){
   if(!currentPreviewData)return;
-  const btn=$('shareContract');const old=btn.textContent;btn.disabled=true;btn.textContent='Preparando PDF…';
+  const btn=$('shareContract'),old=btn.textContent;
+  btn.disabled=true;btn.textContent='Preparando PDF…';
   try{
     const file=await createPdfFile(currentPreviewData);
-    const text=buildDocumentWhatsAppMessage(currentPreviewData,'contract');
-    if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){await navigator.share({title:`Contrato ${currentPreviewData.id}`,text,files:[file]});}
-    else{
-      const url=URL.createObjectURL(file);const a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
-      const phone=String(currentPreviewData.clientPhone||'').replace(/\D/g,'');window.open(`https://wa.me/${phone.length===10?'52'+phone:phone}?text=${encodeURIComponent(text+' El PDF se descargó en tu dispositivo; adjúntalo en este chat.')}`,'_blank');
-      alert('Tu navegador no permite compartir archivos directamente. El PDF se descargó y se abrió WhatsApp para que lo adjuntes.');
+    const fullText=buildDocumentWhatsAppMessage(currentPreviewData,'contract');
+    const compactText=compactDocumentMessage(currentPreviewData,'contract');
+    const result=await sharePdfReliably({
+      file,
+      title:`Contrato ${currentPreviewData.id}`,
+      fullText,
+      compactText,
+      phone:currentPreviewData.clientPhone
+    });
+    if(result.mode==='compact'){
+      alert('El PDF se compartió correctamente con una versión compacta del mensaje.');
+    }else if(result.mode==='download'){
+      alert('El PDF se descargó y se abrió WhatsApp. Selecciona el archivo descargado para adjuntarlo.');
     }
-  }catch(err){if(err?.name!=='AbortError'){console.error(err);alert('No se pudo compartir el PDF. Prueba con Chrome o Safari actualizado.')}}finally{btn.disabled=false;btn.textContent=old}
+  }catch(err){
+    if(err?.name!=='AbortError'){
+      console.error('Error al compartir contrato:',err);
+      alert('No se pudo generar o compartir el contrato. Prueba primero con “Guardar PDF”.');
+    }
+  }finally{
+    btn.disabled=false;btn.textContent=old;
+  }
 }
 $('shareContract').addEventListener('click',shareContract);
 
@@ -975,7 +1039,24 @@ async function quoteCanvas(q){
   const W=1240,H=1754,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,H);g.fillStyle='#16a34a';g.fillRect(0,0,W,180);g.fillStyle='#fff';g.textAlign='center';g.font='bold 54px Arial';g.fillText(COMPANY.name,W/2,72);g.font='25px Arial';g.fillText('COTIZACIÓN DE SERVICIOS',W/2,116);g.font='19px Arial';g.fillText(`${COMPANY.address} · WhatsApp ${COMPANY.whatsapp}`,W/2,150);g.textAlign='left';let y=230,L=72,R=W-72;g.fillStyle='#111';g.font='bold 28px Arial';g.fillText(q.id,L,y);g.textAlign='right';g.font='20px Arial';g.fillText(`Vigente hasta ${dateFmt(q.expiresAt)}`,R,y);g.textAlign='left';y+=45;g.strokeStyle='#d7e8d3';g.strokeRect(L,y,R-L,160);g.font='bold 20px Arial';g.fillText('CLIENTE',L+20,y+35);g.font='20px Arial';g.fillText(q.clientName,L+20,y+72);g.fillText(`Teléfono: ${q.clientPhone}`,L+20,y+108);g.font='bold 20px Arial';g.fillText('EVENTO TENTATIVO',W/2+20,y+35);g.font='20px Arial';g.fillText(q.eventDate?dateFmt(q.eventDate):'Fecha por definir',W/2+20,y+72);drawWrappedText(g,q.eventAddress||'Zona por definir',W/2+20,y+108,R-(W/2+20),22,2);y+=205;g.fillStyle='#eef8ec';g.fillRect(L,y,R-L,42);g.fillStyle='#173a19';g.font='bold 19px Arial';g.fillText('SERVICIO',L+14,y+28);g.fillText('CANT.',730,y+28);g.fillText('TIEMPO',830,y+28);g.textAlign='right';g.fillText('PRECIO',R-10,y+28);g.textAlign='left';y+=42;g.font='18px Arial';for(const s of q.services||[]){const rh=62;g.strokeStyle='#e5e7eb';g.beginPath();g.moveTo(L,y+rh);g.lineTo(R,y+rh);g.stroke();drawWrappedText(g,s.name,L+10,y+23,620,22,2);g.fillText(String(s.qty),748,y+23);g.fillText(s.durationLabel,830,y+23);g.textAlign='right';g.fillText(money(s.price),R-10,y+23);g.textAlign='left';y+=rh}y+=30;g.fillStyle='#f1fff5';g.fillRect(690,y,R-690,145);g.fillStyle='#111';g.font='20px Arial';g.fillText(`Subtotal: ${money(q.subtotal)}`,720,y+38);g.fillText(`Descuento: ${money(q.discount)}`,720,y+76);g.font='bold 25px Arial';g.fillText(`Total estimado: ${money(q.total)}`,720,y+120);y+=190;if(q.notes){g.font='bold 21px Arial';g.fillText('Notas:',L,y);g.font='18px Arial';y=drawWrappedText(g,q.notes,L+75,y,R-L-75,24,5)+24}g.fillStyle='#fff7e6';g.fillRect(L,y,R-L,125);g.fillStyle='#8a4b00';g.font='bold 19px Arial';drawWrappedText(g,'Esta cotización no reserva la fecha ni garantiza disponibilidad. La reserva se confirma únicamente al recibir el anticipo y generar el contrato.',L+20,y+38,R-L-40,27,4);try{const banner=new Image();banner.src=getPdfPromoImage();await banner.decode();g.drawImage(banner,L,H-360,390,205);g.fillStyle='#f1fff5';g.fillRect(L+410,H-360,R-(L+410),205);g.fillStyle='#087a38';g.font='bold 22px Arial';g.fillText('Conoce promociones y novedades',L+430,H-320);g.fillStyle='#263238';g.font='17px Arial';drawWrappedText(g,getPdfPromo().message,L+430,H-285,R-(L+430)-20,22,5)}catch{}g.textAlign='center';g.fillStyle='#555';g.font='17px Arial';g.fillText(`Válida por ${q.validityDays} días · Brinky Fiesta · ${COMPANY.whatsapp}`,W/2,H-55);return c
 }
 async function createQuotePdfFile(q){const c=await quoteCanvas(q),blob=jpegToPdfBlob(c.toDataURL('image/jpeg',.92),c.width,c.height);return new File([blob],`${q.id}-Cotizacion-Brinky-Fiesta.pdf`,{type:'application/pdf'})}
-async function shareQuoteFile(){if(!currentQuote)return;const file=await createQuotePdfFile(currentQuote),text=buildDocumentWhatsAppMessage(currentQuote,'quote');if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]})))await navigator.share({title:`Cotización ${currentQuote.id}`,text,files:[file]});else{const url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);const phone=String(currentQuote.clientPhone||'').replace(/\D/g,'');window.open(`https://wa.me/${phone.length===10?'52'+phone:phone}?text=${encodeURIComponent(text+' El PDF se descargó; adjúntalo en este chat.')}`,'_blank')}}
+async function shareQuoteFile(){
+  if(!currentQuote)return;
+  const file=await createQuotePdfFile(currentQuote);
+  const fullText=buildDocumentWhatsAppMessage(currentQuote,'quote');
+  const compactText=compactDocumentMessage(currentQuote,'quote');
+  const result=await sharePdfReliably({
+    file,
+    title:`Cotización ${currentQuote.id}`,
+    fullText,
+    compactText,
+    phone:currentQuote.clientPhone
+  });
+  if(result.mode==='compact'){
+    alert('La cotización se compartió correctamente con una versión compacta del mensaje.');
+  }else if(result.mode==='download'){
+    alert('El PDF se descargó y se abrió WhatsApp. Selecciona el archivo descargado para adjuntarlo.');
+  }
+}
 async function downloadQuote(){if(!currentQuote)return;const file=await createQuotePdfFile(currentQuote),url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),3000)}
 function initQuotes(){
   $('quoteNumber').textContent=quoteId();addQuoteService({name:'',qty:1,duration:'4',price:0});
@@ -988,7 +1069,7 @@ function initQuotes(){
   $('saveQuoteBtn').addEventListener('click',()=>{rememberQuotePreferences();if(!quoteForm.reportValidity())return;const q=collectQuote();saveQuote(q);alert('Cotización guardada correctamente.');resetQuoteForm()});
   quoteForm.addEventListener('submit',e=>{e.preventDefault();rememberQuotePreferences();if(!quoteForm.reportValidity())return;const q=collectQuote();saveQuote(q);renderQuotePreview(q)});
   $('searchQuotes').addEventListener('input',renderQuotes);$('closeQuotePreview').addEventListener('click',()=>{$('quotePreviewModal').classList.add('hidden');resetQuoteForm()});
-  $('convertQuoteBtn').addEventListener('click',()=>convertQuoteToContract(currentQuote));$('shareQuote').addEventListener('click',()=>shareQuoteFile().catch(e=>e?.name!=='AbortError'&&alert('No se pudo compartir la cotización.')));$('downloadQuotePdf').addEventListener('click',()=>downloadQuote().catch(()=>alert('No se pudo guardar el PDF.')));$('printQuote').addEventListener('click',()=>{document.body.classList.add('printing-quote');window.print();setTimeout(()=>document.body.classList.remove('printing-quote'),500)});renderQuotes();recalculateQuote()
+  $('convertQuoteBtn').addEventListener('click',()=>convertQuoteToContract(currentQuote));$('shareQuote').addEventListener('click',()=>shareQuoteFile().catch(e=>{if(e?.name!=='AbortError'){console.error('Error al compartir cotización:',e);alert('No se pudo generar o compartir la cotización. Prueba primero con “Guardar PDF”.')}}));$('downloadQuotePdf').addEventListener('click',()=>downloadQuote().catch(()=>alert('No se pudo guardar el PDF.')));$('printQuote').addEventListener('click',()=>{document.body.classList.add('printing-quote');window.print();setTimeout(()=>document.body.classList.remove('printing-quote'),500)});renderQuotes();recalculateQuote()
 }
 
 initQuotes();

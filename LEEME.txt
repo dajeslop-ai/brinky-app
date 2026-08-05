@@ -1,7 +1,8 @@
-BRINKY SUITE PRO v7.6 DEV — COMUNICACIÓN COMERCIAL
+BRINKY SUITE PRO v7.6.1 DEV — COMPARTIR PDF CORREGIDO
 
-- Imagen promocional editable para contratos y cotizaciones.
-- Pestañas WhatsApp Contrato y Cotización.
-- Variables: {CLIENTE}, {FOLIO}, {FECHA}, {HORA}, {SERVICIOS}, {TOTAL}, {ANTICIPO}, {SALDO}, {FACEBOOK}.
-- Mensajes personalizados al compartir PDF.
-- Vista previa y restauración de imagen original.
+- Restaura el envío del PDF junto con el mensaje.
+- Conserva las plantillas personalizadas.
+- Primero intenta PDF + mensaje completo.
+- Si el teléfono rechaza el texto largo, reintenta con mensaje compacto.
+- Solo usa descarga manual como último recurso.
+- Mejora los avisos de error para distinguir generación y envío.
