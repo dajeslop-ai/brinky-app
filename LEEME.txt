@@ -1,24 +1,7 @@
-BRINKY SUITE PRO v7.5 DEV — FACEBOOK INTEGRADO
+BRINKY SUITE PRO v7.6 DEV — COMUNICACIÓN COMERCIAL
 
-CAMBIOS
-
-1. CONFIGURACIÓN SIMPLIFICADA
-- Se eliminó el campo separado de reseñas.
-- Se eliminó el selector Página/Reseñas.
-- Ahora existe un solo campo: Página oficial de Facebook.
-- Viene preconfigurado con:
-  https://www.facebook.com/profile.php?id=61578868178582
-
-2. MENSAJES DE WHATSAPP
-- Bienvenida incluye el enlace de Facebook.
-- Actualización incluye el enlace de Facebook.
-- Premio desbloqueado incluye el enlace de Facebook.
-- Referencia incluye el enlace de Facebook.
-- El texto invita a visitar la página y compartir una opinión.
-
-3. PLANTILLAS PERSONALIZADAS ANTIGUAS
-- Si una plantilla guardada anteriormente no contiene {FACEBOOK},
-  la aplicación añade automáticamente el enlace al final.
-
-4. VARIABLE AUTOMÁTICA
-- {FACEBOOK} siempre se sustituye por la página oficial configurada.
+- Imagen promocional editable para contratos y cotizaciones.
+- Pestañas WhatsApp Contrato y Cotización.
+- Variables: {CLIENTE}, {FOLIO}, {FECHA}, {HORA}, {SERVICIOS}, {TOTAL}, {ANTICIPO}, {SALDO}, {FACEBOOK}.
+- Mensajes personalizados al compartir PDF.
+- Vista previa y restauración de imagen original.

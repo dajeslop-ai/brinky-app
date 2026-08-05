@@ -462,3 +462,6 @@ input:focus,select:focus,textarea:focus{
   margin-left:4px;
   word-break:break-all;
 }
+
+/* v7.6 Comunicación comercial */
+.promo-image-current{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}.promo-image-current img{width:min(100%,360px);aspect-ratio:1200/630;object-fit:cover;border-radius:14px;border:1px solid #dfe4e1;background:#f4f6f5}
