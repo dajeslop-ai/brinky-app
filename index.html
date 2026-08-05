@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#16a34a"><title>Brinky Suite Pro</title>
 <link rel="manifest" href="manifest.json"><link rel="icon" href="icons/icon-192.png?v=37"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=36">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Brinky Suite">
-<link rel="stylesheet" href="styles.css?v=761">
+<link rel="stylesheet" href="styles.css?v=751">
 </head>
 <body>
 <header class="topbar">
@@ -15,7 +15,7 @@
 </header>
 <main>
 <section id="homeView" class="view active">
-  <div class="welcome card"><div><span class="badge">Versión 7.6.1 DEV · PDF corregido</span><h2>Bienvenido</h2><p>Administra tus contratos desde el smartphone.</p></div><img src="icons/icon-192.png?v=37" alt="Brinky"></div>
+  <div class="welcome card"><div><span class="badge">Versión 7.5.1 DEV · Imagen PDF editable</span><h2>Bienvenido</h2><p>Administra tus contratos desde el smartphone.</p></div><img src="icons/icon-192.png?v=37" alt="Brinky"></div>
   <div class="stats">
     <article class="stat card"><b id="statContracts">0</b><span>Contratos guardados</span></article>
     <article class="stat card"><b id="statUpcoming">0</b><span>Próximos eventos</span></article>
@@ -66,10 +66,12 @@
     <label>Mensaje promocional
       <textarea id="pdfPromoMessage" rows="5" maxlength="650" placeholder="Escribe promociones, servicios nuevos, concursos o avisos para tus clientes."></textarea>
     </label>
+
     <label>Imagen promocional
       <input id="pdfPromoImageInput" type="file" accept="image/*">
-      <span class="field-help">Se usará al final de contratos y cotizaciones. La app la ajustará automáticamente.</span>
+      <span class="field-help">Esta imagen aparecerá al final de contratos y cotizaciones.</span>
     </label>
+
     <div class="promo-image-current">
       <img id="pdfPromoImagePreview" alt="Imagen promocional actual">
       <button id="restorePdfPromoImage" type="button" class="btn btn-light">Restaurar imagen original</button>
@@ -241,14 +243,12 @@
     <div class="section-head"><div><h3>✍️ Plantillas de WhatsApp</h3><p>Modifica y guarda los mensajes que se usarán automáticamente con los socios.</p></div></div>
     <details>
       <summary><b>Plantillas de WhatsApp</b></summary>
-      <p class="field-help">Variables Club: {NOMBRE}, {CODIGO}, {ESTRELLAS}, {META}, {FALTANTES}, {RECOMPENSA}, {PROGRESO}, {FACEBOOK}. Documentos: {CLIENTE}, {FOLIO}, {FECHA}, {HORA}, {SERVICIOS}, {TOTAL}, {ANTICIPO}, {SALDO}, {FACEBOOK}.</p>
+      <p class="field-help">Variables disponibles: {NOMBRE}, {CODIGO}, {ESTRELLAS}, {META}, {FALTANTES}, {RECOMPENSA}, {PROGRESO}, {FACEBOOK}.</p>
       <div class="template-tabs">
         <button type="button" class="template-tab active" data-template-type="welcome">Bienvenida</button>
         <button type="button" class="template-tab" data-template-type="update">Actualización</button>
         <button type="button" class="template-tab" data-template-type="reward">Premio</button>
         <button type="button" class="template-tab" data-template-type="referral">Referencia</button>
-        <button type="button" class="template-tab" data-template-type="contract">Contrato</button>
-        <button type="button" class="template-tab" data-template-type="quote">Cotización</button>
       </div>
       <label>Plantilla seleccionada<textarea id="clubMessageTemplate" rows="14"></textarea></label>
       <div class="facebook-link-settings">
@@ -313,5 +313,5 @@
 
 <div id="messageModal" class="modal hidden"><div class="modal-content message-modal"><div class="modal-actions"><button id="closeMessageModal" class="btn btn-light">Cerrar</button><button id="saveMessageEdit" class="btn btn-blue">Guardar cambios</button><button id="sendMessageWhatsApp" class="btn btn-whatsapp">Compartir tarjeta y mensaje</button></div><section class="card"><span id="messageTypeBadge" class="badge"></span><h3 id="messageClientName"></h3><p id="messageClientPhone" class="saved-meta"></p><label>Mensaje<textarea id="messageEditor" rows="14"></textarea></label><p class="field-help">En celulares compatibles se abrirá el menú para compartir la tarjeta PNG junto con el mensaje. Si el navegador no lo permite, la tarjeta se descargará y WhatsApp se abrirá con el texto preparado.</p></section></div></div>
 
-<script src="app.js?v=761"></script>
+<script src="app.js?v=751"></script>
 </body></html>

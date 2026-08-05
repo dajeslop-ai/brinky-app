@@ -1,8 +1,17 @@
-BRINKY SUITE PRO v7.6.1 DEV — COMPARTIR PDF CORREGIDO
+BRINKY SUITE PRO v7.5.1 DEV — IMAGEN PDF EDITABLE
 
-- Restaura el envío del PDF junto con el mensaje.
-- Conserva las plantillas personalizadas.
-- Primero intenta PDF + mensaje completo.
-- Si el teléfono rechaza el texto largo, reintenta con mensaje compacto.
-- Solo usa descarga manual como último recurso.
-- Mejora los avisos de error para distinguir generación y envío.
+BASE
+- Parte directamente de Brinky Suite Pro v7.5 DEV.
+
+ÚNICO CAMBIO
+- En “Mensaje promocional PDF” puedes seleccionar una imagen.
+- La imagen aparece al final de contratos y cotizaciones.
+- Incluye vista previa y restauración de la imagen original.
+- La aplicación redimensiona y comprime la imagen automáticamente.
+
+NO SE MODIFICÓ
+- El envío de PDF.
+- Los mensajes de WhatsApp.
+- Las plantillas.
+- El flujo de compartir documentos.
+- Las funciones de contratos, cotizaciones, Club, QR y reportes.

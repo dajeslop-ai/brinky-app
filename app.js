@@ -3,7 +3,7 @@ const form = $('contractForm');
 const servicesList = $('servicesList');
 const serviceTemplate = $('serviceTemplate');
 const STORAGE_KEY = 'brinky_contracts_v1';
-const APP_VERSION='7.6.1 DEV';
+const APP_VERSION='7.5.1 DEV';
 const QUOTES_KEY='brinky_quotes_v1';
 const EXPENSES_KEY='brinky_expenses_v1';
 const LOYALTY_KEY='brinky_loyalty_v1';
@@ -17,42 +17,6 @@ const COMPANY = {
   name:'BRINKY FIESTA',
   address:'Calle 13 x 18 y 20, Col. Centro, Umán, Yucatán',
   whatsapp:'999 447 6314',
-  contract:`🎉 Hola *{CLIENTE}*
-
-Te compartimos tu contrato de Brinky Fiesta.
-
-📄 Folio: *{FOLIO}*
-📅 Fecha del evento: *{FECHA}*
-⏰ Horario: *{HORA}*
-🎪 Servicios:
-{SERVICIOS}
-
-💰 Total: *{TOTAL}*
-💵 Anticipo: *{ANTICIPO}*
-🧾 Saldo: *{SALDO}*
-
-Adjuntamos tu contrato en PDF.
-
-📘 Facebook:
-{FACEBOOK}`,
-
-  quote:`🎈 Hola *{CLIENTE}*
-
-Te compartimos tu cotización de Brinky Fiesta.
-
-📄 Folio: *{FOLIO}*
-📅 Fecha solicitada: *{FECHA}*
-⏰ Horario: *{HORA}*
-🎪 Servicios:
-{SERVICIOS}
-
-💰 Total cotizado: *{TOTAL}*
-
-La cotización no aparta la fecha hasta confirmar disponibilidad y anticipo.
-
-📘 Facebook:
-{FACEBOOK}`,
-
   facebook:'https://www.facebook.com/profile.php?id=61578868178582'
 };
 let deferredPrompt;
@@ -557,15 +521,36 @@ const money = n => new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN
 const dateFmt = s => s ? new Date(`${s}T12:00:00`).toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'}) : '';
 
 
-function getPdfPromoImage(){return localStorage.getItem(PDF_PROMO_IMAGE_KEY)||'assets/facebook-banner.jpg'}
-function setPdfPromoImage(v){if(v)localStorage.setItem(PDF_PROMO_IMAGE_KEY,v);else localStorage.removeItem(PDF_PROMO_IMAGE_KEY)}
-async function resizePromoImageFile(file){
-  const data=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)});
-  const img=await loadImageAsCanvas(data),c=document.createElement('canvas');c.width=1200;c.height=630;const g=c.getContext('2d');
-  const s=Math.max(c.width/img.width,c.height/img.height),w=img.width*s,h=img.height*s;g.drawImage(img,(c.width-w)/2,(c.height-h)/2,w,h);
-  return c.toDataURL('image/jpeg',.82)
+
+function getPdfPromoImage(){
+  return localStorage.getItem(PDF_PROMO_IMAGE_KEY)||'assets/facebook-banner.jpg';
 }
-function updatePdfPromoImagePreview(){if($('pdfPromoImagePreview'))$('pdfPromoImagePreview').src=getPdfPromoImage()}
+function setPdfPromoImage(data){
+  if(data)localStorage.setItem(PDF_PROMO_IMAGE_KEY,data);
+  else localStorage.removeItem(PDF_PROMO_IMAGE_KEY);
+}
+async function resizePromoImageFile(file){
+  const data=await new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(reader.result);
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
+  const img=await loadImageAsCanvas(data);
+  const canvas=document.createElement('canvas');
+  canvas.width=1200;
+  canvas.height=630;
+  const g=canvas.getContext('2d');
+  const scale=Math.max(canvas.width/img.width,canvas.height/img.height);
+  const w=img.width*scale;
+  const h=img.height*scale;
+  g.drawImage(img,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
+  return canvas.toDataURL('image/jpeg',0.82);
+}
+function updatePdfPromoImagePreview(){
+  const img=$('pdfPromoImagePreview');
+  if(img)img.src=getPdfPromoImage();
+}
 
 const DEFAULT_PDF_PROMO={
   message:'Tu recomendación nos ayuda a que más familias conozcan Brinky Fiesta. Visita nuestra página Brincolines Brinky Fiesta para conocer promociones, nuevos servicios y novedades.'
@@ -818,83 +803,19 @@ async function createPdfFile(d){
   return new File([blob],`${d.id}-Brinky-Fiesta.pdf`,{type:'application/pdf'});
 }
 
-
-function compactDocumentMessage(d,type='contract'){
-  const vars=documentMessageVariables(d,type);
-  if(type==='quote'){
-    return `Hola ${vars.CLIENTE}, te compartimos tu cotización ${vars.FOLIO} de Brinky Fiesta. Fecha: ${vars.FECHA}. Total: ${vars.TOTAL}. ${vars.FACEBOOK}`;
-  }
-  return `Hola ${vars.CLIENTE}, te compartimos tu contrato ${vars.FOLIO} de Brinky Fiesta. Fecha: ${vars.FECHA}. Total: ${vars.TOTAL}. Anticipo: ${vars.ANTICIPO}. Saldo: ${vars.SALDO}. ${vars.FACEBOOK}`;
-}
-function downloadSharedFile(file){
-  const url=URL.createObjectURL(file);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download=file.name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),5000);
-}
-async function sharePdfReliably({file,title,fullText,compactText,phone}){
-  const canShareFile=navigator.share
-    && (!navigator.canShare || navigator.canShare({files:[file]}));
-
-  if(canShareFile){
-    try{
-      await navigator.share({title,text:fullText,files:[file]});
-      return {mode:'full'};
-    }catch(error){
-      if(error?.name==='AbortError')throw error;
-      console.warn('Falló compartir con mensaje completo:',error);
-      try{
-        await navigator.share({title,text:compactText,files:[file]});
-        return {mode:'compact'};
-      }catch(secondError){
-        if(secondError?.name==='AbortError')throw secondError;
-        console.warn('Falló compartir con mensaje compacto:',secondError);
-      }
-    }
-  }
-
-  downloadSharedFile(file);
-  const digits=String(phone||'').replace(/\D/g,'');
-  const destination=digits.length===10?'52'+digits:digits;
-  window.open(
-    `https://wa.me/${destination}?text=${encodeURIComponent(fullText+'\n\nEl PDF se descargó en tu dispositivo; adjúntalo en este chat.')}`,
-    '_blank'
-  );
-  return {mode:'download'};
-}
-
 async function shareContract(){
   if(!currentPreviewData)return;
-  const btn=$('shareContract'),old=btn.textContent;
-  btn.disabled=true;btn.textContent='Preparando PDF…';
+  const btn=$('shareContract');const old=btn.textContent;btn.disabled=true;btn.textContent='Preparando PDF…';
   try{
     const file=await createPdfFile(currentPreviewData);
-    const fullText=buildDocumentWhatsAppMessage(currentPreviewData,'contract');
-    const compactText=compactDocumentMessage(currentPreviewData,'contract');
-    const result=await sharePdfReliably({
-      file,
-      title:`Contrato ${currentPreviewData.id}`,
-      fullText,
-      compactText,
-      phone:currentPreviewData.clientPhone
-    });
-    if(result.mode==='compact'){
-      alert('El PDF se compartió correctamente con una versión compacta del mensaje.');
-    }else if(result.mode==='download'){
-      alert('El PDF se descargó y se abrió WhatsApp. Selecciona el archivo descargado para adjuntarlo.');
+    const text=`Hola ${currentPreviewData.clientName}, te compartimos tu contrato de Brinky Fiesta. Folio ${currentPreviewData.id}. Fecha: ${dateFmt(currentPreviewData.eventDate)}. Saldo pendiente: ${money(currentPreviewData.balance)}.`;
+    if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){await navigator.share({title:`Contrato ${currentPreviewData.id}`,text,files:[file]});}
+    else{
+      const url=URL.createObjectURL(file);const a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
+      const phone=String(currentPreviewData.clientPhone||'').replace(/\D/g,'');window.open(`https://wa.me/${phone.length===10?'52'+phone:phone}?text=${encodeURIComponent(text+' El PDF se descargó en tu dispositivo; adjúntalo en este chat.')}`,'_blank');
+      alert('Tu navegador no permite compartir archivos directamente. El PDF se descargó y se abrió WhatsApp para que lo adjuntes.');
     }
-  }catch(err){
-    if(err?.name!=='AbortError'){
-      console.error('Error al compartir contrato:',err);
-      alert('No se pudo generar o compartir el contrato. Prueba primero con “Guardar PDF”.');
-    }
-  }finally{
-    btn.disabled=false;btn.textContent=old;
-  }
+  }catch(err){if(err?.name!=='AbortError'){console.error(err);alert('No se pudo compartir el PDF. Prueba con Chrome o Safari actualizado.')}}finally{btn.disabled=false;btn.textContent=old}
 }
 $('shareContract').addEventListener('click',shareContract);
 
@@ -1036,27 +957,10 @@ function convertQuoteToContract(q){
   $('quotePreviewModal').classList.add('hidden');alert('Cotización cargada como contrato. Completa los horarios, anticipo y firma antes de generar.')
 }
 async function quoteCanvas(q){
-  const W=1240,H=1754,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,H);g.fillStyle='#16a34a';g.fillRect(0,0,W,180);g.fillStyle='#fff';g.textAlign='center';g.font='bold 54px Arial';g.fillText(COMPANY.name,W/2,72);g.font='25px Arial';g.fillText('COTIZACIÓN DE SERVICIOS',W/2,116);g.font='19px Arial';g.fillText(`${COMPANY.address} · WhatsApp ${COMPANY.whatsapp}`,W/2,150);g.textAlign='left';let y=230,L=72,R=W-72;g.fillStyle='#111';g.font='bold 28px Arial';g.fillText(q.id,L,y);g.textAlign='right';g.font='20px Arial';g.fillText(`Vigente hasta ${dateFmt(q.expiresAt)}`,R,y);g.textAlign='left';y+=45;g.strokeStyle='#d7e8d3';g.strokeRect(L,y,R-L,160);g.font='bold 20px Arial';g.fillText('CLIENTE',L+20,y+35);g.font='20px Arial';g.fillText(q.clientName,L+20,y+72);g.fillText(`Teléfono: ${q.clientPhone}`,L+20,y+108);g.font='bold 20px Arial';g.fillText('EVENTO TENTATIVO',W/2+20,y+35);g.font='20px Arial';g.fillText(q.eventDate?dateFmt(q.eventDate):'Fecha por definir',W/2+20,y+72);drawWrappedText(g,q.eventAddress||'Zona por definir',W/2+20,y+108,R-(W/2+20),22,2);y+=205;g.fillStyle='#eef8ec';g.fillRect(L,y,R-L,42);g.fillStyle='#173a19';g.font='bold 19px Arial';g.fillText('SERVICIO',L+14,y+28);g.fillText('CANT.',730,y+28);g.fillText('TIEMPO',830,y+28);g.textAlign='right';g.fillText('PRECIO',R-10,y+28);g.textAlign='left';y+=42;g.font='18px Arial';for(const s of q.services||[]){const rh=62;g.strokeStyle='#e5e7eb';g.beginPath();g.moveTo(L,y+rh);g.lineTo(R,y+rh);g.stroke();drawWrappedText(g,s.name,L+10,y+23,620,22,2);g.fillText(String(s.qty),748,y+23);g.fillText(s.durationLabel,830,y+23);g.textAlign='right';g.fillText(money(s.price),R-10,y+23);g.textAlign='left';y+=rh}y+=30;g.fillStyle='#f1fff5';g.fillRect(690,y,R-690,145);g.fillStyle='#111';g.font='20px Arial';g.fillText(`Subtotal: ${money(q.subtotal)}`,720,y+38);g.fillText(`Descuento: ${money(q.discount)}`,720,y+76);g.font='bold 25px Arial';g.fillText(`Total estimado: ${money(q.total)}`,720,y+120);y+=190;if(q.notes){g.font='bold 21px Arial';g.fillText('Notas:',L,y);g.font='18px Arial';y=drawWrappedText(g,q.notes,L+75,y,R-L-75,24,5)+24}g.fillStyle='#fff7e6';g.fillRect(L,y,R-L,125);g.fillStyle='#8a4b00';g.font='bold 19px Arial';drawWrappedText(g,'Esta cotización no reserva la fecha ni garantiza disponibilidad. La reserva se confirma únicamente al recibir el anticipo y generar el contrato.',L+20,y+38,R-L-40,27,4);try{const banner=new Image();banner.src=getPdfPromoImage();await banner.decode();g.drawImage(banner,L,H-360,390,205);g.fillStyle='#f1fff5';g.fillRect(L+410,H-360,R-(L+410),205);g.fillStyle='#087a38';g.font='bold 22px Arial';g.fillText('Conoce promociones y novedades',L+430,H-320);g.fillStyle='#263238';g.font='17px Arial';drawWrappedText(g,getPdfPromo().message,L+430,H-285,R-(L+430)-20,22,5)}catch{}g.textAlign='center';g.fillStyle='#555';g.font='17px Arial';g.fillText(`Válida por ${q.validityDays} días · Brinky Fiesta · ${COMPANY.whatsapp}`,W/2,H-55);return c
+  const W=1240,H=1754,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,H);g.fillStyle='#16a34a';g.fillRect(0,0,W,180);g.fillStyle='#fff';g.textAlign='center';g.font='bold 54px Arial';g.fillText(COMPANY.name,W/2,72);g.font='25px Arial';g.fillText('COTIZACIÓN DE SERVICIOS',W/2,116);g.font='19px Arial';g.fillText(`${COMPANY.address} · WhatsApp ${COMPANY.whatsapp}`,W/2,150);g.textAlign='left';let y=230,L=72,R=W-72;g.fillStyle='#111';g.font='bold 28px Arial';g.fillText(q.id,L,y);g.textAlign='right';g.font='20px Arial';g.fillText(`Vigente hasta ${dateFmt(q.expiresAt)}`,R,y);g.textAlign='left';y+=45;g.strokeStyle='#d7e8d3';g.strokeRect(L,y,R-L,160);g.font='bold 20px Arial';g.fillText('CLIENTE',L+20,y+35);g.font='20px Arial';g.fillText(q.clientName,L+20,y+72);g.fillText(`Teléfono: ${q.clientPhone}`,L+20,y+108);g.font='bold 20px Arial';g.fillText('EVENTO TENTATIVO',W/2+20,y+35);g.font='20px Arial';g.fillText(q.eventDate?dateFmt(q.eventDate):'Fecha por definir',W/2+20,y+72);drawWrappedText(g,q.eventAddress||'Zona por definir',W/2+20,y+108,R-(W/2+20),22,2);y+=205;g.fillStyle='#eef8ec';g.fillRect(L,y,R-L,42);g.fillStyle='#173a19';g.font='bold 19px Arial';g.fillText('SERVICIO',L+14,y+28);g.fillText('CANT.',730,y+28);g.fillText('TIEMPO',830,y+28);g.textAlign='right';g.fillText('PRECIO',R-10,y+28);g.textAlign='left';y+=42;g.font='18px Arial';for(const s of q.services||[]){const rh=62;g.strokeStyle='#e5e7eb';g.beginPath();g.moveTo(L,y+rh);g.lineTo(R,y+rh);g.stroke();drawWrappedText(g,s.name,L+10,y+23,620,22,2);g.fillText(String(s.qty),748,y+23);g.fillText(s.durationLabel,830,y+23);g.textAlign='right';g.fillText(money(s.price),R-10,y+23);g.textAlign='left';y+=rh}y+=30;g.fillStyle='#f1fff5';g.fillRect(690,y,R-690,145);g.fillStyle='#111';g.font='20px Arial';g.fillText(`Subtotal: ${money(q.subtotal)}`,720,y+38);g.fillText(`Descuento: ${money(q.discount)}`,720,y+76);g.font='bold 25px Arial';g.fillText(`Total estimado: ${money(q.total)}`,720,y+120);y+=190;if(q.notes){g.font='bold 21px Arial';g.fillText('Notas:',L,y);g.font='18px Arial';y=drawWrappedText(g,q.notes,L+75,y,R-L-75,24,5)+24}g.fillStyle='#fff7e6';g.fillRect(L,y,R-L,125);g.fillStyle='#8a4b00';g.font='bold 19px Arial';drawWrappedText(g,'Esta cotización no reserva la fecha ni garantiza disponibilidad. La reserva se confirma únicamente al recibir el anticipo y generar el contrato.',L+20,y+38,R-L-40,27,4);g.textAlign='center';g.fillStyle='#555';g.font='17px Arial';g.fillText(`Válida por ${q.validityDays} días · Brinky Fiesta · ${COMPANY.whatsapp}`,W/2,H-55);return c
 }
 async function createQuotePdfFile(q){const c=await quoteCanvas(q),blob=jpegToPdfBlob(c.toDataURL('image/jpeg',.92),c.width,c.height);return new File([blob],`${q.id}-Cotizacion-Brinky-Fiesta.pdf`,{type:'application/pdf'})}
-async function shareQuoteFile(){
-  if(!currentQuote)return;
-  const file=await createQuotePdfFile(currentQuote);
-  const fullText=buildDocumentWhatsAppMessage(currentQuote,'quote');
-  const compactText=compactDocumentMessage(currentQuote,'quote');
-  const result=await sharePdfReliably({
-    file,
-    title:`Cotización ${currentQuote.id}`,
-    fullText,
-    compactText,
-    phone:currentQuote.clientPhone
-  });
-  if(result.mode==='compact'){
-    alert('La cotización se compartió correctamente con una versión compacta del mensaje.');
-  }else if(result.mode==='download'){
-    alert('El PDF se descargó y se abrió WhatsApp. Selecciona el archivo descargado para adjuntarlo.');
-  }
-}
+async function shareQuoteFile(){if(!currentQuote)return;const file=await createQuotePdfFile(currentQuote),text=`Hola ${currentQuote.clientName}, te compartimos la cotización ${currentQuote.id} de Brinky Fiesta por ${money(currentQuote.total)}. Vigente hasta ${dateFmt(currentQuote.expiresAt)}. Esta cotización no reserva la fecha.`;if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]})))await navigator.share({title:`Cotización ${currentQuote.id}`,text,files:[file]});else{const url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);const phone=String(currentQuote.clientPhone||'').replace(/\D/g,'');window.open(`https://wa.me/${phone.length===10?'52'+phone:phone}?text=${encodeURIComponent(text+' El PDF se descargó; adjúntalo en este chat.')}`,'_blank')}}
 async function downloadQuote(){if(!currentQuote)return;const file=await createQuotePdfFile(currentQuote),url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),3000)}
 function initQuotes(){
   $('quoteNumber').textContent=quoteId();addQuoteService({name:'',qty:1,duration:'4',price:0});
@@ -1069,7 +973,7 @@ function initQuotes(){
   $('saveQuoteBtn').addEventListener('click',()=>{rememberQuotePreferences();if(!quoteForm.reportValidity())return;const q=collectQuote();saveQuote(q);alert('Cotización guardada correctamente.');resetQuoteForm()});
   quoteForm.addEventListener('submit',e=>{e.preventDefault();rememberQuotePreferences();if(!quoteForm.reportValidity())return;const q=collectQuote();saveQuote(q);renderQuotePreview(q)});
   $('searchQuotes').addEventListener('input',renderQuotes);$('closeQuotePreview').addEventListener('click',()=>{$('quotePreviewModal').classList.add('hidden');resetQuoteForm()});
-  $('convertQuoteBtn').addEventListener('click',()=>convertQuoteToContract(currentQuote));$('shareQuote').addEventListener('click',()=>shareQuoteFile().catch(e=>{if(e?.name!=='AbortError'){console.error('Error al compartir cotización:',e);alert('No se pudo generar o compartir la cotización. Prueba primero con “Guardar PDF”.')}}));$('downloadQuotePdf').addEventListener('click',()=>downloadQuote().catch(()=>alert('No se pudo guardar el PDF.')));$('printQuote').addEventListener('click',()=>{document.body.classList.add('printing-quote');window.print();setTimeout(()=>document.body.classList.remove('printing-quote'),500)});renderQuotes();recalculateQuote()
+  $('convertQuoteBtn').addEventListener('click',()=>convertQuoteToContract(currentQuote));$('shareQuote').addEventListener('click',()=>shareQuoteFile().catch(e=>e?.name!=='AbortError'&&alert('No se pudo compartir la cotización.')));$('downloadQuotePdf').addEventListener('click',()=>downloadQuote().catch(()=>alert('No se pudo guardar el PDF.')));$('printQuote').addEventListener('click',()=>{document.body.classList.add('printing-quote');window.print();setTimeout(()=>document.body.classList.remove('printing-quote'),500)});renderQuotes();recalculateQuote()
 }
 
 initQuotes();
@@ -1266,13 +1170,6 @@ function getClubTemplates(){
   try{return {...DEFAULT_CLUB_TEMPLATES,...JSON.parse(localStorage.getItem(CLUB_TEMPLATES_KEY)||'{}')}}catch{return {...DEFAULT_CLUB_TEMPLATES}}
 }
 function setClubTemplates(data){localStorage.setItem(CLUB_TEMPLATES_KEY,JSON.stringify(data))}
-function documentMessageVariables(d,type='contract'){
-  const services=(d.services||[]).map(s=>`• ${s.name} · ${s.qty||1} · ${s.durationLabel||s.duration||''} · ${money(s.price||0)}`).join('\n');
-  return {CLIENTE:d.clientName||'Cliente',FOLIO:d.id||'',FECHA:d.eventDate?dateFmt(d.eventDate):'Por definir',HORA:(d.startTime&&d.endTime)?`${d.startTime} a ${d.endTime}`:(d.startTime||'Por definir'),SERVICIOS:services||'Servicios por definir',TOTAL:money(d.total||0),ANTICIPO:money(d.deposit||0),SALDO:money(d.balance||Math.max(0,Number(d.total||0)-Number(d.deposit||0))),FACEBOOK:getClubTemplates().facebook||'https://www.facebook.com/profile.php?id=61578868178582'}
-}
-function applyDocumentTemplate(t,d,type='contract'){const v=documentMessageVariables(d,type);return String(t||'').replace(/\{([A-Z_]+)\}/g,(a,k)=>Object.prototype.hasOwnProperty.call(v,k)?v[k]:a)}
-function buildDocumentWhatsAppMessage(d,type='contract'){const t=getClubTemplates(),k=type==='quote'?'quote':'contract';let x=t[k]||DEFAULT_CLUB_TEMPLATES[k];if(!x.includes('{FACEBOOK}'))x+='\n\n📘 Facebook:\n{FACEBOOK}';return applyDocumentTemplate(x,d,type)}
-
 function messageVariables(c){
   const s=getLoyaltySettings(),next=loyaltyNext(c),r=rewardStatus(c);
   const filled='⭐'.repeat(Math.min(Number(c.stamps||0),s.r2));
@@ -1643,11 +1540,8 @@ $('restoreMessageTemplates')?.addEventListener('click',()=>{
   setClubTemplates({...DEFAULT_CLUB_TEMPLATES});fillCustomizationControls();loadTemplateEditor();$('messageTemplatePreview')?.classList.add('hidden');alert('Mensajes originales restaurados.');
 });
 $('previewMessageTemplate')?.addEventListener('click',()=>{
-  const el=$('messageTemplatePreview');let preview='';
-  if(selectedTemplateType==='contract'||selectedTemplateType==='quote'){
-    const sample={id:selectedTemplateType==='contract'?'BF-2026-000001':'COT-2026-000001',clientName:'María López',eventDate:new Date().toISOString().slice(0,10),startTime:'12:00',endTime:'18:00',services:[{name:'Castillo Rosa',qty:1,durationLabel:'6 horas',price:1000}],total:1000,deposit:200,balance:800};
-    preview=applyDocumentTemplate($('clubMessageTemplate').value,sample,selectedTemplateType);
-  }else{const sample=getLoyalty()[0]||{name:'María López',code:'BRK-0001',phone:'999 000 0000',stamps:3,createdAt:new Date().toISOString()};preview=applyTemplate($('clubMessageTemplate').value,sample)}
+  const sample=getLoyalty()[0]||{name:'María López',code:'BRK-0001',phone:'999 000 0000',stamps:3,createdAt:new Date().toISOString()};
+  const preview=applyTemplate($('clubMessageTemplate').value,sample),el=$('messageTemplatePreview');
   el.textContent=preview;el.classList.remove('hidden');
 });
 $('clubFacebookLink')?.addEventListener('input',updateFacebookLinkPreview);
@@ -1669,8 +1563,32 @@ $('restorePdfPromo')?.addEventListener('click',()=>{
   renderPdfPromoPreview();
 });
 $('previewPdfPromo')?.addEventListener('click',renderPdfPromoPreview);
-$('pdfPromoImageInput')?.addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>12*1024*1024){alert('La imagen es demasiado grande.');return}try{setPdfPromoImage(await resizePromoImageFile(f));updatePdfPromoImagePreview();alert('Imagen promocional guardada.')}catch(err){console.error(err);alert('No se pudo procesar la imagen.')}});
-$('restorePdfPromoImage')?.addEventListener('click',()=>{if(confirm('¿Restaurar la imagen original?')){setPdfPromoImage('');updatePdfPromoImagePreview()}});
+
+$('pdfPromoImageInput')?.addEventListener('change',async e=>{
+  const file=e.target.files?.[0];
+  if(!file)return;
+  if(file.size>12*1024*1024){
+    alert('La imagen es demasiado grande. Elige una menor de 12 MB.');
+    e.target.value='';
+    return;
+  }
+  try{
+    const resized=await resizePromoImageFile(file);
+    setPdfPromoImage(resized);
+    updatePdfPromoImagePreview();
+    alert('Imagen promocional guardada. Se usará en contratos y cotizaciones.');
+  }catch(error){
+    console.error(error);
+    alert('No se pudo procesar la imagen.');
+  }
+});
+
+$('restorePdfPromoImage')?.addEventListener('click',()=>{
+  if(!confirm('¿Restaurar la imagen promocional original?'))return;
+  setPdfPromoImage('');
+  updatePdfPromoImagePreview();
+});
+
 updatePdfPromoImagePreview();
 
 $('printLoyaltyCard')?.addEventListener('click',()=>{document.body.classList.add('printing-loyalty');window.print();setTimeout(()=>document.body.classList.remove('printing-loyalty'),500)});renderLoyalty();
